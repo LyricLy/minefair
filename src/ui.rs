@@ -14,35 +14,6 @@ struct Camera {
     y: isize,
 }
 
-fn show_cell(cell: Cell) -> Result<()> {
-    match cell {
-        Cell::Hidden(flag) => {
-            queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 40, g: 40, b: 40 }))?;
-            if flag {
-                print!("{}", "P".with(Color::Rgb { r: 255, g: 60, b: 60 }));
-            } else {
-                print!("`");
-            }
-        },
-        Cell::Revealed(n) => {
-            queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 120, g: 120, b: 110 }), style::SetAttribute(Attribute::Bold))?;
-            match n {
-                0 => print!(" "),
-                1 => print!("{}", "1".with(Color::Rgb { r: 120, g: 250, b: 250 })),
-                2 => print!("{}", "2".with(Color::Rgb { r: 130, g: 250, b: 120 })),
-                3 => print!("{}", "3".with(Color::Rgb { r: 250, g: 140, b: 120 })),
-                4 => print!("{}", "4".with(Color::Rgb { r: 230, g: 100, b: 255 })),
-                5 => print!("{}", "5".with(Color::Rgb { r: 240, g: 90, b: 20 })),
-                6 => print!("{}", "6".with(Color::Rgb { r: 50, g: 250, b: 255 })),
-                7 => print!("{}", "7".with(Color::Rgb { r: 50,  g: 50,  b: 60 })),
-                8 => print!("{}", "8".with(Color::Rgb { r: 255, g: 170, b: 230 })),
-                _ => unreachable!(),
-            }
-        },
-    }
-    Ok(())
-}
-
 impl Camera {
     fn new((w, h): (u16, u16)) -> Self {
         Self { field: Field::new(), x: 0, y: 0, w, h }
@@ -52,7 +23,41 @@ impl Camera {
         queue!(stdout(), cursor::MoveTo(0, 0))?;
         for y in self.y..self.y+self.h as isize {
             for x in self.x..self.x+self.w as isize {
-                show_cell(self.field.get((x, y)))?;
+                let cell = self.field.get((x, y));
+                match cell {
+                    Cell::Hidden(flag) => {
+                        let risk = self.field.cell_risk((x, y));
+                        if risk == 1.0 {
+                            queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 255, g: 0, b: 0 }))?;
+                        } else if risk == 0.0 {
+                            queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 0, g: 255, b: 0 }))?;
+                        } else {
+                            let g = 55 + (200.0*risk) as u8;
+                            queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 200, g, b: 0 }))?;
+                            //queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 40, g: 40, b: 40 }))?;
+                        }
+                        if flag {
+                            print!("{}", "P".with(Color::Rgb { r: 255, g: 60, b: 60 }));
+                        } else {
+                            print!("`");
+                        }
+                    },
+                    Cell::Revealed(n) => {
+                        queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 120, g: 120, b: 110 }), style::SetAttribute(Attribute::Bold))?;
+                        match n {
+                            0 => print!(" "),
+                            1 => print!("{}", "1".with(Color::Rgb { r: 120, g: 250, b: 250 })),
+                            2 => print!("{}", "2".with(Color::Rgb { r: 130, g: 250, b: 120 })),
+                            3 => print!("{}", "3".with(Color::Rgb { r: 250, g: 140, b: 120 })),
+                            4 => print!("{}", "4".with(Color::Rgb { r: 230, g: 100, b: 255 })),
+                            5 => print!("{}", "5".with(Color::Rgb { r: 240, g: 90, b: 20 })),
+                            6 => print!("{}", "6".with(Color::Rgb { r: 50, g: 250, b: 255 })),
+                            7 => print!("{}", "7".with(Color::Rgb { r: 50,  g: 50,  b: 60 })),
+                            8 => print!("{}", "8".with(Color::Rgb { r: 255, g: 170, b: 230 })),
+                            _ => unreachable!(),
+                        }
+                    },
+                }
             }
             queue!(stdout(), cursor::MoveToNextLine(1))?;
         }
@@ -87,8 +92,6 @@ pub fn game_loop() -> Result<()> {
     queue!(stdout(), terminal::EnterAlternateScreen, terminal::DisableLineWrap, cursor::Hide, EnableMouseCapture)?;
 
     let mut cam = Camera::new(terminal::size()?);
-    //cam.field.reveal_cell((0, 0)).unwrap();
-    //return Ok(());
     let mut speed = 1;
     let mut hold = None;
     let mut click_active = false;
