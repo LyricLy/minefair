@@ -32,7 +32,7 @@ impl Camera {
                         } else if risk == 0.0 {
                             queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 0, g: 255, b: 0 }))?;
                         } else {
-                            let g = 55 + (200.0*risk) as u8;
+                            let g = 55 + (200.0*(1.0-risk)) as u8;
                             queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 200, g, b: 0 }))?;
                             //queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 40, g: 40, b: 40 }))?;
                         }
@@ -93,7 +93,6 @@ pub fn game_loop() -> Result<()> {
 
     let mut cam = Camera::new(terminal::size()?);
     //cam.field.reveal_cell((0, 0)).unwrap();
-    //cam.field.reveal_cell((1, 0)).unwrap();
     //return Ok(());
     let mut speed = 1;
     let mut hold = None;

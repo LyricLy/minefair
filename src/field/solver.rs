@@ -4,6 +4,7 @@ impl Field {
     fn group_from(&self, point: Coord) -> Option<Vec<Coord>> {
         let risk = self.risk_cache.get(&point);
         if risk == Some(&1.0) || risk == Some(&0.0) || self.get(point).is_revealed() {
+            //dbg!(risk, self.get(point).is_revealed());
             return None;
         }
 
@@ -31,7 +32,7 @@ impl Field {
         Some(group)
     }
 
-    fn solve_group(&mut self, group: Vec<Coord>) {
+    fn solve_group(&mut self, group: Vec<Coord>) -> bool {
         //dbg!(&group);
 
         #[inline(always)]
@@ -41,14 +42,15 @@ impl Field {
 
         let (lx, hx) = match group.iter().map(|&(x, _)| x).minmax().into_option() {
             Some(x) => x,
-            None => return,
+            None => return true,
         };
         let (ly, hy) = match group.iter().map(|&(_, y)| y).minmax().into_option() {
             Some(y) => y,
-            None => return,
+            None => return true,
         };
         let (lx, ly, hx, hy) = (lx-1, ly-1, hx+2, hy+2);  // half-open
         let (width, height) = ((hx-lx) as usize, (hy-ly) as usize);
+        //dbg!(width, height);
         let mut small_world = Vec::with_capacity(width*height);
         let mut unknowns = Vec::new();
 
@@ -131,10 +133,15 @@ impl Field {
             }
         }
 
-        let paths = paths as f32;
-        for (_, count, orig, _) in unknowns {
-            //dbg!(orig, count, paths);
-            self.risk_cache.insert(orig, count as f32 / paths);
+        if paths == 0 {
+            false
+        } else {
+            let paths = paths as f32;
+            for (_, count, orig, _) in unknowns {
+                //dbg!(orig, count, paths);
+                self.risk_cache.insert(orig, count as f32 / paths);
+            }
+            true
         }
     }
 
@@ -156,22 +163,28 @@ impl Field {
             return Ok(());
         }
 
-        let mut num = 0;
-        for adj in adjacents(point) {
-            if random::<f32>() < self.cell_risk(adj) {
-                num += 1;
-            }
-        }
-        //dbg!(num);
-
-        self.set(point, Cell::Revealed(num));
         self.risk_cache.remove(&point);
 
-        for adj in adjacents(point) {
-            if let Some(group) = self.group_from(adj) {
-                self.solve_group(group);
-                break;
+        let mut num;
+        'outer: loop {
+            num = 0;
+            for adj in adjacents(point) {
+                if random::<f32>() < self.cell_risk(adj) {
+                    num += 1;
+                }
             }
+            self.set(point, Cell::Revealed(num));
+
+            for adj in adjacents(point) {
+                if let Some(group) = self.group_from(adj) {
+                    if self.solve_group(group) {
+                        break 'outer;
+                    }
+                    continue 'outer;
+                }
+            }
+
+            break;
         }
 
         if num == 0 {
