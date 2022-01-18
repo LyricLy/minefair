@@ -92,6 +92,9 @@ pub fn game_loop() -> Result<()> {
     queue!(stdout(), terminal::EnterAlternateScreen, terminal::DisableLineWrap, cursor::Hide, EnableMouseCapture)?;
 
     let mut cam = Camera::new(terminal::size()?);
+    //cam.field.reveal_cell((0, 0)).unwrap();
+    //cam.field.reveal_cell((1, 0)).unwrap();
+    //return Ok(());
     let mut speed = 1;
     let mut hold = None;
     let mut click_active = false;
