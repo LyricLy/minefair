@@ -1,3 +1,6 @@
+mod judges;
+
+use judges::Judge;
 use super::*;
 
 impl Field {
@@ -158,9 +161,22 @@ impl Field {
         }
     }
 
+    pub fn autoclick(&mut self) {
+        for (&cell, &risk) in self.risk_cache.iter() {
+            if risk == 0.0 {
+                self.reveal_cell(cell);
+                break;
+            }
+        }
+    }
+
     pub fn reveal_cell(&mut self, point: (isize, isize)) -> Result<(), ()> {
         if self.get(point).is_revealed() {
             return Ok(());
+        }
+
+        if !judges::Threshold(0.999999).is_clear(self, point) {
+            return Err(());
         }
 
         self.risk_cache.remove(&point);

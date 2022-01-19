@@ -14,6 +14,39 @@ struct Camera {
     y: isize,
 }
 
+fn show_cell(cell: Cell, sprite: bool) -> Result<()> {
+    match cell {
+        Cell::Hidden(flag) => {
+            queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 40, g: 40, b: 40 }))?;
+            if !sprite {
+                print!(" ");
+            } else if flag {
+                print!("{}", "P".with(Color::Rgb { r: 255, g: 60, b: 60 }));
+            } else {
+                print!("`");
+            }
+        },
+        Cell::Revealed(n) => {
+            queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 120, g: 120, b: 110 }), style::SetAttribute(Attribute::Bold))?;
+            if !sprite {
+                print!(" ");
+            } else { match n {
+                0 => print!(" "),
+                1 => print!("{}", "1".with(Color::Rgb { r: 120, g: 250, b: 250 })),
+                2 => print!("{}", "2".with(Color::Rgb { r: 130, g: 250, b: 120 })),
+                3 => print!("{}", "3".with(Color::Rgb { r: 250, g: 140, b: 120 })),
+                4 => print!("{}", "4".with(Color::Rgb { r: 230, g: 100, b: 255 })),
+                5 => print!("{}", "5".with(Color::Rgb { r: 240, g: 90, b: 20 })),
+                6 => print!("{}", "6".with(Color::Rgb { r: 50, g: 250, b: 255 })),
+                7 => print!("{}", "7".with(Color::Rgb { r: 50,  g: 50,  b: 60 })),
+                8 => print!("{}", "8".with(Color::Rgb { r: 255, g: 170, b: 230 })),
+                _ => unreachable!(),
+            } }
+        },
+    }
+    Ok(())
+}
+
 impl Camera {
     fn new((w, h): (u16, u16)) -> Self {
         Self { field: Field::new(), x: 0, y: 0, w, h }
@@ -22,50 +55,32 @@ impl Camera {
     fn draw_entire_board(&self) -> Result<()> {
         queue!(stdout(), cursor::MoveTo(0, 0))?;
         for y in self.y..self.y+self.h as isize {
-            for x in self.x..self.x+self.w as isize {
+            let res = self.x.rem_euclid(3);
+            let cell = self.field.get((self.x.div_euclid(3), y));
+            if res < 1 {
+                show_cell(cell, false)?;
+            }
+            if res < 2 {
+                show_cell(cell, true)?;
+            }
+            show_cell(cell, false)?;
+            for x in self.x.div_euclid(3)+1..self.x.div_euclid(3)+self.w as isize {
                 let cell = self.field.get((x, y));
-                match cell {
-                    Cell::Hidden(flag) => {
-                        let risk = self.field.cell_risk((x, y));
-                        if risk == 1.0 {
-                            queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 255, g: 0, b: 0 }))?;
-                        } else if risk == 0.0 {
-                            queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 0, g: 255, b: 0 }))?;
-                        } else {
-                            let g = 55 + (200.0*(1.0-risk)) as u8;
-                            queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 200, g, b: 0 }))?;
-                            //queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 40, g: 40, b: 40 }))?;
-                        }
-                        if flag {
-                            print!("{}", "P".with(Color::Rgb { r: 255, g: 60, b: 60 }));
-                        } else {
-                            print!("`");
-                        }
-                    },
-                    Cell::Revealed(n) => {
-                        queue!(stdout(), style::SetBackgroundColor(Color::Rgb { r: 120, g: 120, b: 110 }), style::SetAttribute(Attribute::Bold))?;
-                        match n {
-                            0 => print!(" "),
-                            1 => print!("{}", "1".with(Color::Rgb { r: 120, g: 250, b: 250 })),
-                            2 => print!("{}", "2".with(Color::Rgb { r: 130, g: 250, b: 120 })),
-                            3 => print!("{}", "3".with(Color::Rgb { r: 250, g: 140, b: 120 })),
-                            4 => print!("{}", "4".with(Color::Rgb { r: 230, g: 100, b: 255 })),
-                            5 => print!("{}", "5".with(Color::Rgb { r: 240, g: 90, b: 20 })),
-                            6 => print!("{}", "6".with(Color::Rgb { r: 50, g: 250, b: 255 })),
-                            7 => print!("{}", "7".with(Color::Rgb { r: 50,  g: 50,  b: 60 })),
-                            8 => print!("{}", "8".with(Color::Rgb { r: 255, g: 170, b: 230 })),
-                            _ => unreachable!(),
-                        }
-                    },
-                }
+                show_cell(cell, false)?;
+                show_cell(cell, true)?;
+                show_cell(cell, false)?;
             }
             queue!(stdout(), cursor::MoveToNextLine(1))?;
         }
         Ok(())
     }
 
+    fn clicked_cell(&self, col: u16, row: u16) -> (isize, isize) {
+        ((self.x+col as isize) / 3, self.y+row as isize)
+    }
+
     fn click(&mut self, col: u16, row: u16) -> Result<()> {
-        let pos = (self.x+col as isize, self.y+row as isize);
+        let pos = self.clicked_cell(col, row);
         match self.field.get(pos) {
             Cell::Hidden(true) => return Ok(()),
             Cell::Revealed(_) => return Ok(()),
@@ -76,7 +91,7 @@ impl Camera {
     }
 
     fn flag(&mut self, col: u16, row: u16) -> Result<()> {
-        self.field.toggle_flag((self.x+col as isize, self.y+row as isize));
+        self.field.toggle_flag(self.clicked_cell(col, row));
         self.draw_entire_board()
     }
 
@@ -143,7 +158,7 @@ pub fn game_loop() -> Result<()> {
                     }
                 },
                 MouseEventKind::Down(MouseButton::Right) => cam.flag(event.column, event.row)?,
-                MouseEventKind::ScrollDown => if speed > 1 { speed -= 1; },
+                MouseEventKind::ScrollDown => { cam.field.autoclick(); cam.draw_entire_board()?; },
                 MouseEventKind::ScrollUp => if speed < 10 { speed += 1 },
                 _ => {},
             },

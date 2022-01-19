@@ -76,7 +76,7 @@ pub struct Field {
 
 impl Field {
     pub fn new() -> Self {
-        Field { chunks: FxHashMap::default(), risk_cache: FxHashMap::default(), density: 0.25 }
+        Field { chunks: FxHashMap::default(), risk_cache: FxHashMap::default(), density: 0.22 }
     }
 
     pub fn get(&self, point: Coord) -> Cell {
