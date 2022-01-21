@@ -1,5 +1,10 @@
 [package]
 name = "minefair"
+authors = ["Christina Hanson <christinahansondesu@gmail.com>"]
+repository = "https://github.com/LyricLy/minefair"
+license = "MIT"
+description = "An infinite and fair Minesweeper"
+readme = "README.md"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,3 +13,4 @@ rustc-hash = "1.1.0"
 crossterm = "0.22.1"
 rand = "0.8.4"
 itertools = "0.10.3"
+clap = { version = "3.0.10", features = ["derive", "wrap_help"] }

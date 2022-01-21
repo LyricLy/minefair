@@ -6,8 +6,9 @@ impl Field {
     pub(super) fn is_clear(&self, point: Coord) -> bool {
         match self.judge {
             Random => random::<f32>() > self.cell_risk(point),
-            Threshold(t) => if t == 1.0 { self.cell_risk(point) != 1.0 } else { self.cell_risk(point) <= t },
-            GlobalBest => {
+            Kind => self.cell_risk(point) != 1.0,
+            Strict => self.cell_risk(point) == 0.0,
+            Global => {
                 if self.risk_cache.is_empty() {
                     return true;
                 }

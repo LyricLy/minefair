@@ -29,4 +29,10 @@ There is also an optional flag that will ensure that the generated board is alwa
 ```
 
 # Command line usage
-Currently the executable doesn't take any arguments, as saving and configuration aren't supported yet. Check back soon!
+Saving isn't supported yet.
+
+Do `minefair` on its own to start a new game. You can modify game settings with the following flags:
+* `--judge`: Pick the judge to use.
+* `--density`: The density of the mines, represented as a probability from 0 to 1.
+* `--solvable`: Ensure solvability without any moves that aren't 100% likely not to be mines.
+* `--cheat`: See the output from the solver, revealing how safe each square is.

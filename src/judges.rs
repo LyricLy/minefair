@@ -1,6 +1,10 @@
+use clap::ArgEnum;
+
+#[derive(Clone, ArgEnum)]
 pub enum Judge {
     Random,
-    Threshold(f32),
-    GlobalBest,
+    Strict,
+    Kind,
+    Global,
     Kaboom,
 }

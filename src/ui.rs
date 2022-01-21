@@ -6,6 +6,7 @@ use crossterm::event::{Event, KeyCode, MouseEventKind, MouseEvent, MouseButton, 
 use crossterm::style::{Color, Stylize};
 
 use crate::field::{Field, Cell, adjacents};
+use crate::Args;
 
 #[derive(PartialEq)]
 enum DisplayMode {
@@ -27,8 +28,9 @@ struct Camera {
 }
 
 impl Camera {
-    fn new((w, h): (u16, u16)) -> Self {
-        Self { field: Field::new(), x: 0, y: 0, col: u16::MAX, row: u16::MAX, mode: DisplayMode::Normal, dead: false, w, h }
+    fn new(args: Args, (w, h): (u16, u16)) -> Self {
+        let mode = if args.cheat { DisplayMode::Risk } else { DisplayMode::Normal };
+        Self { field: Field::new(args), x: 0, y: 0, col: u16::MAX, row: u16::MAX, mode, dead: false, w, h }
     }
 
     fn show(&mut self, col: isize, row: isize, c: impl Display) {
@@ -120,7 +122,8 @@ impl Camera {
             }
             _ => stack.push(pos),
         }
-        while !stack.is_empty() {
+        let mut done = 0;
+        while !stack.is_empty() && done < 1000 {
             let pos = stack.pop().unwrap();
             match self.field.get(pos) {
                 Cell::Hidden(true) => continue,
@@ -143,6 +146,7 @@ impl Camera {
                     return;
                 },
             }
+            done += 1;
         }
         if self.mode != DisplayMode::Normal {
             self.draw_entire_board();
@@ -165,11 +169,11 @@ impl Camera {
     }
 }
 
-pub fn game_loop() -> Result<()> {
+pub fn game_loop(args: Args) -> Result<()> {
     terminal::enable_raw_mode()?;
     queue!(stdout(), terminal::EnterAlternateScreen, terminal::DisableLineWrap, cursor::Hide, EnableMouseCapture)?;
 
-    let mut cam = Camera::new(terminal::size()?);
+    let mut cam = Camera::new(args, terminal::size()?);
     let mut speed = 1;
     let mut hold = None;
     let mut click_active = false;

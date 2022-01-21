@@ -6,6 +6,7 @@ use rand::random;
 use itertools::Itertools;
 
 use crate::judges::Judge;
+use crate::Args;
 
 #[derive(Clone, Copy)]
 struct CellData {
@@ -80,8 +81,8 @@ pub struct Field {
 }
 
 impl Field {
-    pub fn new() -> Self {
-        Field { chunks: FxHashMap::default(), risk_cache: FxHashMap::default(), density: 0.66, judge: Judge::Random, solvable: true }
+    pub fn new(args: Args) -> Self {
+        Field { chunks: FxHashMap::default(), risk_cache: FxHashMap::default(), density: args.density, judge: args.judge, solvable: args.solvable }
     }
 
     pub fn get(&self, point: Coord) -> Cell {
