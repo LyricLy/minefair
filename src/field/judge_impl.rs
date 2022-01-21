@@ -11,7 +11,7 @@ impl Field {
                 if self.risk_cache.is_empty() {
                     return true;
                 }
-                let best = *self.risk_cache.values().min_by(|&x, &y| x.partial_cmp(&y).unwrap()).unwrap();
+                let best = *self.risk_cache.values().min_by(|&x, &y| x.partial_cmp(y).unwrap()).unwrap();
                 let best = if best > self.density { self.density } else { best };
                 self.cell_risk(point) == best
             },
