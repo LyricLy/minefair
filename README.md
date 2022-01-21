@@ -11,7 +11,8 @@ There is also an optional flag that will ensure that the generated board is alwa
 ## List of judges
 * `random` - Decides at random based on the probability of the tile being a mine. Acts like the original game.
 * `global` - Accepts any move that has the best probability of being safe across the whole board, but any move with a worse probability will always be a mine.
-* `threshold` - Accepts any move with a probability better than a specified threshold.
+* `kind` - Accepts any move that has a mine probability of less than 1.
+* `strict` - Only accepts move that have a mine probability of 0.
 * `kaboom` - Imitates the rules of [Kaboom](https://pwmarcz.pl/kaboom/), another fair Minesweeper implementation. If there are any tiles that are 100% safe, you must click one of those. Otherwise you can click any tile that isn't guaranteed to be a mine.
 
 # Controls
