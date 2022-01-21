@@ -1,8 +1,11 @@
 mod solver;
+mod judge_impl;
 
 use rustc_hash::FxHashMap;
 use rand::random;
 use itertools::Itertools;
+
+use crate::judges::Judge;
 
 #[derive(Clone, Copy)]
 struct CellData {
@@ -58,7 +61,7 @@ type Coord = (isize, isize);
 const CHUNK_SIZE: isize = 64;
 const CHUNK_AREA: usize = (CHUNK_SIZE * CHUNK_SIZE) as usize;
 
-fn adjacents((x, y): Coord) -> impl Iterator<Item=Coord> {
+pub fn adjacents((x, y): Coord) -> impl Iterator<Item=Coord> {
     [(x-1, y-1), (x, y-1), (x+1, y-1), (x-1, y), (x+1, y), (x-1, y+1), (x, y+1), (x+1, y+1)].into_iter()
 }
 
@@ -72,11 +75,12 @@ pub struct Field {
     chunks: FxHashMap<Coord, [CellData; CHUNK_AREA]>,
     risk_cache: FxHashMap<Coord, f32>,
     density: f32,
+    judge: Judge,
 }
 
 impl Field {
     pub fn new() -> Self {
-        Field { chunks: FxHashMap::default(), risk_cache: FxHashMap::default(), density: 0.22 }
+        Field { chunks: FxHashMap::default(), risk_cache: FxHashMap::default(), density: 0.22, judge: Judge::Random }
     }
 
     pub fn get(&self, point: Coord) -> Cell {

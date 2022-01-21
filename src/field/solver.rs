@@ -1,10 +1,7 @@
-mod judges;
-
-use judges::Judge;
 use super::*;
 
 impl Field {
-    fn group_from(&self, point: Coord) -> Option<Vec<Coord>> {
+    pub(super) fn group_from(&self, point: Coord) -> Option<Vec<Coord>> {
         let risk = self.risk_cache.get(&point);
         if risk == Some(&1.0) || risk == Some(&0.0) || self.get(point).is_revealed() {
             //dbg!(risk, self.get(point).is_revealed());
@@ -36,8 +33,6 @@ impl Field {
     }
 
     fn solve_group(&mut self, group: Vec<Coord>) -> bool {
-        //dbg!(&group);
-
         #[inline(always)]
         fn small_adjacents(point: usize, width: usize) -> impl Iterator<Item=usize> {
             [point.wrapping_sub(1+width), point.wrapping_sub(width), (point+1).wrapping_sub(width), point.wrapping_sub(1), point+1, point-1+width, point+width, point+1+width].into_iter()
@@ -53,7 +48,6 @@ impl Field {
         };
         let (lx, ly, hx, hy) = (lx-1, ly-1, hx+2, hy+2);  // half-open
         let (width, height) = ((hx-lx) as usize, (hy-ly) as usize);
-        //dbg!(width, height);
         let mut small_world = Vec::with_capacity(width*height);
         let mut unknowns = Vec::new();
 
@@ -87,7 +81,6 @@ impl Field {
         let mut stack = vec![(false, false), (true, false)];
 
         while !stack.is_empty() {
-            //dbg!(&stack, &small_world);
             let &mut (action, ref mut done) = stack.last_mut().unwrap();
             if *done {
                 stack.pop();
@@ -141,7 +134,6 @@ impl Field {
         } else {
             let paths = paths as f32;
             for (_, count, orig, _) in unknowns {
-                //dbg!(orig, count, paths);
                 self.risk_cache.insert(orig, count as f32 / paths);
             }
             true
@@ -161,21 +153,8 @@ impl Field {
         }
     }
 
-    pub fn autoclick(&mut self) {
-        for (&cell, &risk) in self.risk_cache.iter() {
-            if risk == 0.0 {
-                self.reveal_cell(cell);
-                break;
-            }
-        }
-    }
-
-    pub fn reveal_cell(&mut self, point: (isize, isize)) -> Result<(), ()> {
-        if self.get(point).is_revealed() {
-            return Ok(());
-        }
-
-        if !judges::Threshold(0.999999).is_clear(self, point) {
+    pub fn reveal_cell(&mut self, point: (isize, isize)) -> Result<u8, ()> {
+        if !self.is_clear(point) {
             return Err(());
         }
 
@@ -203,11 +182,6 @@ impl Field {
             break;
         }
 
-        if num == 0 {
-            for adj in adjacents(point) {
-                self.reveal_cell(adj)?;
-            }
-        }
-        Ok(())
+        Ok(num)
     }
 }

@@ -2,7 +2,8 @@
 
 mod field;
 mod ui;
+mod judges;
 
 fn main() {
-    ui::game_loop();
+    ui::game_loop().unwrap();
 }
