@@ -76,11 +76,12 @@ pub struct Field {
     risk_cache: FxHashMap<Coord, f32>,
     density: f32,
     judge: Judge,
+    solvable: bool,
 }
 
 impl Field {
     pub fn new() -> Self {
-        Field { chunks: FxHashMap::default(), risk_cache: FxHashMap::default(), density: 0.22, judge: Judge::Random }
+        Field { chunks: FxHashMap::default(), risk_cache: FxHashMap::default(), density: 0.66, judge: Judge::Random, solvable: true }
     }
 
     pub fn get(&self, point: Coord) -> Cell {

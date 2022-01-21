@@ -172,7 +172,7 @@ impl Field {
 
             for adj in adjacents(point) {
                 if let Some(group) = self.group_from(adj) {
-                    if self.solve_group(group) {
+                    if self.solve_group(group) && (!self.solvable || self.risk_cache.values().any(|&x| x == 0.0)) {
                         break 'outer;
                     }
                     continue 'outer;
