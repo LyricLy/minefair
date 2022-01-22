@@ -191,8 +191,9 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
     let exists = save_path.exists();
     let file = std::fs::File::options().read(true).write(true).create(true).open(save_path);
     let autosave = args.autosave;
+    let reset = args.reset;
     let mut cam = Camera::new(args, file.expect("failed to open save file"), terminal::size()?);
-    if exists {
+    if exists && !reset {
         cam.load();
     } else {
         cam.save();

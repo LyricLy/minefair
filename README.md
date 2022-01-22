@@ -33,13 +33,17 @@ There is also an optional flag that will ensure that the generated board is alwa
 # Command line usage
 
 `minefair [OPTIONS] [SAVE_PATH]`
+e.g. `minefair --judge strict --density 0.3 --solvable --autosave`
 
 ## Flags
 * `--judge`: Pick the judge to use.
 * `--density`: The density of the mines, represented as a probability from 0 to 1.
 * `--solvable`: Ensure solvability without any moves that aren't 100% likely not to be mines.
+* `--reset` Clear the save file and start from scratch.
 * `--cheat`: See the output from the solver, revealing how safe each square is.
 * `--autosave`: Save automatically after each click. The default is only to save on pressing Ctrl+S or closing the game.
+
+The `--judge`, `--density` and `--solvable` flags will be ignored if the save file already exists.
 
 ## Saving
 The positional SAVE_PATH argument can be used to set the path of the file to use for save data. It can also be set using the `MINEFAIR_SAVE` environment variable.

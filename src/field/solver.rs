@@ -80,8 +80,7 @@ impl Field {
         let mut i = 0;
         let mut stack = vec![(false, false), (true, false)];
 
-        while !stack.is_empty() {
-            let &mut (action, ref mut done) = stack.last_mut().unwrap();
+        while let Some(&mut (action, ref mut done)) = stack.last_mut() {
             if *done {
                 stack.pop();
                 i -= 1;

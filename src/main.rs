@@ -28,6 +28,8 @@ pub struct Args {
     cheat: bool,
     #[clap(long, short, help = "Save automatically after every click.")]
     autosave: bool,
+    #[clap(long, help = "Delete and recreate the save file.")]
+    reset: bool,
     #[clap(
         help = "The path to the save file. Will be created if it doesn't exist. Defaults to the value of MINEFAIR_SAVE if set, or to a reasonable platform-dependent config folder.",
         env = "MINEFAIR_SAVE",
