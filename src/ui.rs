@@ -44,7 +44,7 @@ impl Camera {
             self.col = col as u16;
             self.row = row as u16;
         }
-        write!(stdout(), "{}", c).unwrap();
+        print!("{}", c);
         self.col += 1;
     }
 
