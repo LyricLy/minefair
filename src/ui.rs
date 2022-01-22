@@ -1,4 +1,5 @@
-use std::io::{stdout, Write};
+use std::io::{stdout, Write, Seek};
+use std::fs::File;
 use std::fmt::Display;
 use crossterm::{queue, Result};
 use crossterm::{terminal, cursor};
@@ -25,12 +26,13 @@ struct Camera {
     row: u16,
     mode: DisplayMode,
     dead: bool,
+    save_file: File,
 }
 
 impl Camera {
-    fn new(args: Args, (w, h): (u16, u16)) -> Self {
+    fn new(args: Args, save_file: File, (w, h): (u16, u16)) -> Self {
         let mode = if args.cheat { DisplayMode::Risk } else { DisplayMode::Normal };
-        Self { field: Field::new(args), x: 0, y: 0, col: u16::MAX, row: u16::MAX, mode, dead: false, w, h }
+        Self { field: Field::new(args), x: 0, y: 0, col: u16::MAX, row: u16::MAX, dead: false, save_file, mode, w, h }
     }
 
     fn show(&mut self, col: isize, row: isize, c: impl Display) {
@@ -42,7 +44,7 @@ impl Camera {
             self.col = col as u16;
             self.row = row as u16;
         }
-        print!("{}", c);
+        write!(stdout(), "{}", c).unwrap();
         self.col += 1;
     }
 
@@ -167,13 +169,35 @@ impl Camera {
         self.y += dy;
         self.draw_entire_board();
     }
+
+    fn load(&mut self) {
+        self.save_file.rewind().expect("failed to rewind");
+        let mut r: Field = bincode::decode_from_std_read(&mut self.save_file, bincode::config::standard()).expect("failed to read save file");
+        std::mem::swap(&mut self.field, &mut r);
+    }
+
+    fn save(&mut self) {
+        self.save_file.rewind().expect("failed to rewind");
+        self.save_file.set_len(0).expect("failed to truncate");
+        bincode::encode_into_std_write(&self.field, &mut self.save_file, bincode::config::standard()).expect("failed to write to save file");
+        self.save_file.flush().expect("failed to flush");
+    }
 }
 
-pub fn game_loop(args: Args) -> Result<()> {
+pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
     terminal::enable_raw_mode()?;
     queue!(stdout(), terminal::EnterAlternateScreen, terminal::DisableLineWrap, cursor::Hide, EnableMouseCapture)?;
 
-    let mut cam = Camera::new(args, terminal::size()?);
+    let exists = save_path.exists();
+    let file = std::fs::File::options().read(true).write(true).create(true).open(save_path);
+    let autosave = args.autosave;
+    let mut cam = Camera::new(args, file.expect("failed to open save file"), terminal::size()?);
+    if exists {
+        cam.load();
+    } else {
+        cam.save();
+    }
+
     let mut speed = 1;
     let mut hold = None;
     let mut click_active = false;
@@ -194,6 +218,7 @@ pub fn game_loop(args: Args) -> Result<()> {
             Event::Key(event) => match event.code {
                 KeyCode::Esc => break,
                 KeyCode::Char('c') if event.modifiers.contains(KeyModifiers::CONTROL) => break,
+                KeyCode::Char('s') if event.modifiers.contains(KeyModifiers::CONTROL) => cam.save(),
                 KeyCode::Char('w') => cam.pan(0, -speed as isize),
                 KeyCode::Char('a') => cam.pan(-speed as isize, 0),
                 KeyCode::Char('s') => cam.pan(0, speed as isize),
@@ -227,6 +252,9 @@ pub fn game_loop(args: Args) -> Result<()> {
                     hold = None;
                     if click_active {
                         cam.click(event.column, event.row);
+                        if autosave && !cam.dead {
+                            cam.save();
+                        }
                         click_active = false;
                     }
                 },
@@ -238,6 +266,7 @@ pub fn game_loop(args: Args) -> Result<()> {
         }
     }
 
+    cam.save();
     queue!(stdout(), cursor::Show, terminal::EnableLineWrap, terminal::LeaveAlternateScreen, DisableMouseCapture)?;
     stdout().flush()?;
     terminal::disable_raw_mode()?;

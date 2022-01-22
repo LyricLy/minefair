@@ -1,6 +1,7 @@
 use clap::ArgEnum;
+use bincode::{Decode, Encode};
 
-#[derive(Clone, ArgEnum)]
+#[derive(Clone, ArgEnum, Decode, Encode)]
 pub enum Judge {
     Random,
     Strict,

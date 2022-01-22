@@ -21,6 +21,7 @@ There is also an optional flag that will ensure that the generated board is alwa
 * Right click flags a tile as a mine.
 * Left clicking a number performs the *chording* action: if the amount of flags around that tile is equal to the number shown, it clears all unflagged tiles around it.
 * After dying, you are in a mode which shows which tiles would have been safe to press. You can press `j` to show the exact risk levels of each tile as hexadecimal digits.
+* Ctrl+S saves the game. This is also done automatically when closing the game, or after every click if `--autosave` is passed.
 
 # Installation
 ```
@@ -30,10 +31,21 @@ There is also an optional flag that will ensure that the generated board is alwa
 ```
 
 # Command line usage
-Saving isn't supported yet.
 
-Do `minefair` on its own to start a new game. You can modify game settings with the following flags:
+`minefair [OPTIONS] [SAVE_PATH]`
+
+## Flags
 * `--judge`: Pick the judge to use.
 * `--density`: The density of the mines, represented as a probability from 0 to 1.
 * `--solvable`: Ensure solvability without any moves that aren't 100% likely not to be mines.
 * `--cheat`: See the output from the solver, revealing how safe each square is.
+* `--autosave`: Save automatically after each click. The default is only to save on pressing Ctrl+S or closing the game.
+
+## Saving
+The positional SAVE_PATH argument can be used to set the path of the file to use for save data. It can also be set using the `MINEFAIR_SAVE` environment variable.
+If neither of these are present, one of the following defaults is used:
+- `$XDG_DATA_HOME/minefair/save.minefair` or `~/.local/share/minefair/save.minefair` (Linux)
+- `~/Library/Application Support/minefair/save.minefair` (macOS)
+- `%APPDATA%\minefair\save.minefair` (Windows)
+
+Pressing Ctrl+S or closing the game with Ctrl+C or Esc will save the game. Revealing a tile will also save if the `--autosave` flag is passed.

@@ -1,14 +1,15 @@
 mod solver;
 mod judge_impl;
 
-use rustc_hash::FxHashMap;
 use rand::random;
 use itertools::Itertools;
+use bincode::{Decode, Encode};
+use std::collections::HashMap;
 
 use crate::judges::Judge;
 use crate::Args;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Encode, Decode)]
 struct CellData {
     /* bit-packed representation:
        x   x   x   x   x   x   x   x
@@ -72,9 +73,10 @@ fn chunk_point((x, y): Coord) -> (Coord, usize) {
     (chunk, point as usize)
 }
 
+#[derive(Encode, Decode)]
 pub struct Field {
-    chunks: FxHashMap<Coord, [CellData; CHUNK_AREA]>,
-    risk_cache: FxHashMap<Coord, f32>,
+    chunks: HashMap<Coord, [CellData; CHUNK_AREA]>,
+    risk_cache: HashMap<Coord, f32>,
     density: f32,
     judge: Judge,
     solvable: bool,
@@ -82,7 +84,7 @@ pub struct Field {
 
 impl Field {
     pub fn new(args: Args) -> Self {
-        Field { chunks: FxHashMap::default(), risk_cache: FxHashMap::default(), density: args.density, judge: args.judge, solvable: args.solvable }
+        Field { chunks: HashMap::new(), risk_cache: HashMap::new(), density: args.density, judge: args.judge, solvable: args.solvable }
     }
 
     pub fn get(&self, point: Coord) -> Cell {
