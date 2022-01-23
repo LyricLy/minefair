@@ -8,10 +8,16 @@ readme = "README.md"
 version = "1.0.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
-crossterm = "0.22.1"
+getrandom = { version = "0.2.4", features = ["js"] }
 rand = "0.8.4"
 itertools = "0.10.3"
-directories = "4.0.1"
 bincode = { version = "2.0.0-beta.1", features = ["derive"] }
-clap = { version = "3.0.10", features = ["derive", "wrap_help", "env"] }
+wasm-bindgen = "0.2.63"
+console_error_panic_hook = "0.1.6"
+
+[profile.release]
+opt-level = "s"
