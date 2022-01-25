@@ -25,9 +25,7 @@ There is also an optional flag that will ensure that the generated board is alwa
 
 # Installation
 ```
-; git clone https://github.com/LyricLy/minefair
-; cd minefair
-; cargo install --path .
+; cargo install --git https://github.com/LyricLy/minefair
 ```
 
 # Command line usage
@@ -38,7 +36,7 @@ e.g. `minefair --judge strict --density 0.3 --solvable --autosave`
 ## Flags
 * `--judge`: Pick the judge to use.
 * `--density`: The density of the mines, represented as a probability from 0 to 1.
-* `--solvable`: Ensure solvability without any moves that aren't 100% likely not to be mines.
+* `--solvable`: Ensure solvability with only moves on squares that are guaranteed not to be mines. The game is still fair without this flag, but it will require probabilistic play.
 * `--reset` Clear the save file and start from scratch.
 * `--cheat`: See the output from the solver, revealing how safe each square is.
 * `--autosave`: Save automatically after each click. The default is only to save on pressing Ctrl+S or closing the game.
