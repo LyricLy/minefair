@@ -5,7 +5,7 @@ repository = "https://github.com/LyricLy/minefair"
 license = "MIT"
 description = "An infinite and fair Minesweeper"
 readme = "README.md"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 
 [dependencies]

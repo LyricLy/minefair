@@ -109,7 +109,7 @@ impl Camera {
     }
 
     fn clicked_cell(&self, col: u16, row: u16) -> (isize, isize) {
-        ((self.x+col as isize) / 3, self.y+row as isize)
+        ((self.x+col as isize).div_euclid(3), self.y+row as isize)
     }
 
     fn click(&mut self, col: u16, row: u16) {
