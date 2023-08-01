@@ -6,6 +6,7 @@ pub enum Judge {
     Random,
     Strict,
     Kind,
+    Local,
     Global,
     Kaboom,
 }

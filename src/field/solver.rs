@@ -1,26 +1,20 @@
 use super::*;
 
 impl Field {
-    pub(super) fn group_from(&self, point: Coord) -> Option<Vec<Coord>> {
-        let risk = self.risk_cache.get(&point);
-        if risk == Some(&1.0) || risk == Some(&0.0) || self.get(point).is_revealed() {
-            //dbg!(risk, self.get(point).is_revealed());
-            return None;
-        }
-
+    pub(super) fn group_from(&self, point: Coord, cut_on_safe: bool) -> Vec<Coord> {
         let mut group = Vec::new();
         let mut stack = vec![point];
 
         while !stack.is_empty() {
             let p = stack.pop().unwrap();
-            if group.contains(&p) {
+            let risk = self.risk_cache.get(&p);
+            if group.contains(&p) || risk == Some(&1.0) || cut_on_safe && risk == Some(&0.0) || self.get(p).is_revealed() {
                 continue;
             }
             for adj in adjacents(p) {
-                if let Cell::Revealed(_) = self.get(adj) {
+                if self.get(adj).is_revealed() {
                     for their_adj in adjacents(adj) {
-                        let risk = self.risk_cache.get(&their_adj);
-                        if their_adj != p && matches!(self.get(their_adj), Cell::Hidden(_)) && risk != Some(&1.0) && risk != Some(&0.0) {
+                        if their_adj != p {
                             stack.push(their_adj);
                         }
                     }
@@ -29,7 +23,7 @@ impl Field {
             group.push(p);
         }
 
-        Some(group)
+        group
     }
 
     fn solve_group(&mut self, group: Vec<Coord>) -> bool {
@@ -170,10 +164,13 @@ impl Field {
             self.set(point, Cell::Revealed(num));
 
             for adj in adjacents(point) {
-                if let Some(group) = self.group_from(adj) {
-                    if self.solve_group(group) && (!self.solvable || self.risk_cache.values().any(|&x| x == 0.0)) {
-                        break 'outer;
-                    }
+                let group = self.group_from(adj, true);
+                if group.is_empty() {
+                    continue;
+                }
+                if self.solve_group(group) && (!self.solvable || self.risk_cache.values().any(|&x| x == 0.0)) {
+                    break 'outer;
+                } else {
                     continue 'outer;
                 }
             }

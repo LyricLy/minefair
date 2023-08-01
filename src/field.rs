@@ -29,21 +29,21 @@ pub enum Cell {
 
 impl Cell {
     fn new() -> Self {
-        Cell::Hidden(false)
+        Self::Hidden(false)
     }
 
     fn is_revealed(self) -> bool {
         match self {
-            Cell::Revealed(_) => true,
-            Cell::Hidden(_) => false,
+            Self::Revealed(_) => true,
+            Self::Hidden(_) => false,
         }
     }
 
     fn to_data(self) -> CellData {
         CellData {
             data: match self {
-                Cell::Hidden(p) => (p as u8) << 1,
-                Cell::Revealed(n) => n << 4 | 1,
+                Self::Hidden(p) => (p as u8) << 1,
+                Self::Revealed(n) => n << 4 | 1,
             },
         }
     }
@@ -84,7 +84,7 @@ pub struct Field {
 
 impl Field {
     pub fn new(args: Args) -> Self {
-        Field { chunks: HashMap::new(), risk_cache: HashMap::new(), density: args.density, judge: args.judge, solvable: args.solvable }
+        Self { chunks: HashMap::new(), risk_cache: HashMap::new(), density: args.density, judge: args.judge, solvable: args.solvable }
     }
 
     pub fn get(&self, point: Coord) -> Cell {

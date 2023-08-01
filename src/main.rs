@@ -22,7 +22,7 @@ pub struct Args {
     density: f32,
     #[clap(long, short, help = "Ensure the board is always solvable without 'guessing'.")]
     solvable: bool,
-    #[clap(long, short, default_value = "global", arg_enum)]
+    #[clap(long, short, default_value = "local", arg_enum)]
     judge: judges::Judge,
     #[clap(long, short, help = "See what the solver sees.")]
     cheat: bool,

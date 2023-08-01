@@ -119,8 +119,8 @@ impl Camera {
         let mut stack = Vec::new();
         let pos = self.clicked_cell(col, row);
         match self.field.get(pos) {
-            Cell::Revealed(n) if n as usize == adjacents(pos).filter(|&x| matches!(self.field.get(x), Cell::Hidden(true))).count() => {
-                stack.extend(adjacents(pos).filter(|&x| matches!(self.field.get(x), Cell::Hidden(false))));
+            Cell::Revealed(n) if n as usize == adjacents(pos).filter(|&x| self.field.get(x) == Cell::Hidden(true)).count() => {
+                stack.extend(adjacents(pos).filter(|&x| self.field.get(x) ==Cell::Hidden(false)));
             }
             _ => stack.push(pos),
         }
