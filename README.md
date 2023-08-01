@@ -11,7 +11,7 @@ There is also an optional flag that will ensure that the generated board is alwa
 ## List of judges
 * `random` - Decides at random based on the probability of the tile being a mine. Acts like the original game.
 * `global` - Accepts any move that has the best probability of being safe across the whole board, but any move with a worse probability will always be a mine.
-* `local` - A more forgiving version of `global` and the default judge. Acts like `global`, but only considers *logical regions*: if some cells are completely logically indepedent from the cell being clicked (because they are separated by guaranteed mines), they are not considered for the purposes of finding the "best" move. While the `global` may punish you for making a slightly risky click because there is a safe cell on the other side of the map, `local` will allow this.
+* `local` - A more forgiving version of `global` and the default judge. Acts like `global`, but only considers *logical regions*: if some cells are completely logically indepedent from the cell being clicked (because they are separated by guaranteed mines), they are not considered for the purposes of finding the move with the best probability. While `global` may punish you for making a slightly risky click because there is a safe cell on the other side of the map, `local` is more lenient in these scenarios.
 * `kind` - Accepts any move that has a mine probability of less than 1.
 * `strict` - Only accepts moves that have a mine probability of 0.
 * `kaboom` - Imitates the rules of [Kaboom](https://pwmarcz.pl/kaboom/), another fair Minesweeper implementation. If there are any tiles that are 100% safe, you must click one of those. Otherwise you can click any tile that isn't guaranteed to be a mine.
