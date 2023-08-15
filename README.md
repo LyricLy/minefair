@@ -1,6 +1,8 @@
 # minefair
 An infinite implementation of Minesweeper that runs in the terminal. It's also completely fair.
 
+![minefair being played](https://github.com/LyricLy/minefair/assets/8314814/a072ca1b-927c-4c77-93d0-1d559a1cbf8a)
+
 # Fairness
 What does being fair mean? `minefair` doesn't generate mines ahead of time like most Minesweeper implementations. Instead, it only generates the *numbers*, and a solver evaluates the validity of your moves.
 That allows some changes to be made to the rules of the game, as we can essentially "move around" the mines based on the player's choices. The game comes with a number of "judges"; algorithms that essentially decide where
