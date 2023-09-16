@@ -25,20 +25,14 @@ impl Field {
         group
     }
 
-    fn solve_group(&mut self, group: Vec<Coord>) -> bool {
+    fn solve_group(&mut self, group: &[Coord]) -> bool {
         #[inline(always)]
         fn small_adjacents(point: usize, width: usize) -> impl Iterator<Item=usize> {
             [point.wrapping_sub(1+width), point.wrapping_sub(width), (point+1).wrapping_sub(width), point.wrapping_sub(1), point+1, point-1+width, point+width, point+1+width].into_iter()
         }
 
-        let (lx, hx) = match group.iter().map(|&(x, _)| x).minmax().into_option() {
-            Some(x) => x,
-            None => return true,
-        };
-        let (ly, hy) = match group.iter().map(|&(_, y)| y).minmax().into_option() {
-            Some(y) => y,
-            None => return true,
-        };
+        let Some((lx, hx)) = group.iter().map(|&(x, _)| x).minmax().into_option() else { return true };
+        let Some((ly, hy)) = group.iter().map(|&(_, y)| y).minmax().into_option() else { return true };
         let (lx, ly, hx, hy) = (lx-1, ly-1, hx+2, hy+2);  // half-open
         let (width, height) = ((hx-lx) as usize, (hy-ly) as usize);
         let mut small_world = Vec::with_capacity(width*height);
@@ -163,10 +157,7 @@ impl Field {
             self.set(point, Cell::Revealed(num));
 
             for adj in adjacents(point) {
-                let group = self.group_from(adj, true);
-                if group.is_empty() {
-                    continue;
-                }
+                let group@[_, ..] = &self.group_from(adj, true)[..] else { continue };
                 if self.solve_group(group) && (!self.solvable || self.risk_cache.values().any(|&x| x == 0.0)) {
                     break 'outer;
                 } else {
