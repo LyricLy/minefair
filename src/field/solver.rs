@@ -5,8 +5,7 @@ impl Field {
         let mut group = Vec::new();
         let mut stack = vec![point];
 
-        while !stack.is_empty() {
-            let p = stack.pop().unwrap();
+        while let Some(p) = stack.pop() {
             let risk = self.risk_cache.get(&p);
             if group.contains(&p) || risk == Some(&1.0) || cut_on_safe && risk == Some(&0.0) || self.get(p).is_revealed() {
                 continue;
