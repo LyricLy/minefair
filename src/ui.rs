@@ -32,7 +32,7 @@ struct Camera {
 impl Camera {
     fn new(args: Args, save_file: File, (w, h): (u16, u16)) -> Self {
         let mode = if args.cheat { DisplayMode::Risk } else { DisplayMode::Normal };
-        Self { field: Field::new(args), x: 0, y: 0, col: u16::MAX, row: u16::MAX, dead: false, save_file, mode, w, h }
+        Self { field: Field::new(args), x: -(w as isize) / 2, y: -(h as isize) / 2, col: u16::MAX, row: u16::MAX, dead: false, save_file, mode, w, h }
     }
 
     fn show(&mut self, col: isize, row: isize, c: impl Display) {
@@ -235,9 +235,9 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
                 _ => {},
             },
             Event::Resize(w, h) => {
-                cam.w = w;
-                cam.h = h;
-                cam.draw_entire_board();
+                let old_w = std::mem::replace(&mut cam.w, w);
+                let old_h = std::mem::replace(&mut cam.h, h);
+                cam.pan((old_w as isize - w as isize) / 2, (old_h as isize - h as isize) / 2);
             },
             Event::Mouse(event) => match event.kind {
                 MouseEventKind::Down(MouseButton::Left) => {
