@@ -35,6 +35,15 @@ impl Camera {
         Self { field: Field::new(args), x: -(w as isize) / 2, y: -(h as isize) / 2, col: u16::MAX, row: u16::MAX, dead: false, save_file, mode, w, h }
     }
 
+    fn reset(&mut self) {
+        self.field.clear();
+        self.x = -(self.w as isize) / 2;
+        self.y = -(self.h as isize) / 2;
+        self.mode = DisplayMode::Normal;
+        self.dead = false;
+        self.draw_entire_board();
+    }
+
     fn show(&mut self, col: isize, row: isize, c: impl Display) {
         if col < 0 || row < 0 || col >= self.w as isize || row >= self.h as isize {
             return;
@@ -189,7 +198,7 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
     queue!(stdout(), terminal::EnterAlternateScreen, terminal::DisableLineWrap, cursor::Hide, EnableMouseCapture)?;
 
     let exists = save_path.exists();
-    let file = std::fs::File::options().read(true).write(true).create(true).open(save_path);
+    let file = std::fs::File::options().read(true).write(true).create(true).truncate(false).open(save_path);
     let autosave = args.autosave;
     let reset = args.reset;
     let mut cam = Camera::new(args, file.expect("failed to open save file"), terminal::size()?);
@@ -232,6 +241,7 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
                     };
                     cam.draw_entire_board();
                 },
+                KeyCode::Char('r') => if cam.dead { cam.reset() },
                 _ => {},
             },
             Event::Resize(w, h) => {
@@ -260,8 +270,8 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
                     }
                 },
                 MouseEventKind::Down(MouseButton::Right) => cam.flag(event.column, event.row),
-                MouseEventKind::ScrollDown => if speed > 1 { speed -= 1; },
-                MouseEventKind::ScrollUp => if speed < 10 { speed += 1; },
+                MouseEventKind::ScrollDown => if speed > 1 { speed -= 1 },
+                MouseEventKind::ScrollUp => if speed < 10 { speed += 1 },
                 _ => {},
             },
         }

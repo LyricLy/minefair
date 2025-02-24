@@ -23,7 +23,7 @@ There is also an optional flag that will ensure that the generated board is alwa
 * Left click to reveal a tile.
 * Right click flags a tile as a mine.
 * Left clicking a number performs the *chording* action: if the amount of flags around that tile is equal to the number shown, it clears all unflagged tiles around it.
-* After dying, you are in a mode which shows which tiles would have been safe to press. You can press `j` to show the exact risk levels of each tile as hexadecimal digits.
+* After dying, you are in a mode which shows which tiles would have been safe to press. You can press `j` to show the exact risk levels of each tile as hexadecimal digits. Press `r` to start a new game with the same settings.
 * Ctrl+S saves the game. This is also done automatically when closing the game, or after every click if `--autosave` is passed.
 
 # Installation

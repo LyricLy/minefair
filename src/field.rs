@@ -95,6 +95,11 @@ impl Field {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.chunks.clear();
+        self.risk_cache.clear();
+    }
+
     fn set(&mut self, point: Coord, cell: Cell) {
         let (chunk_coord, idx) = chunk_point(point);
         let chunk = self.chunks.entry(chunk_coord).or_insert_with(|| [Cell::new().to_data(); CHUNK_AREA]);
