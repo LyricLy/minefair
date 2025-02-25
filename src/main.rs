@@ -2,6 +2,7 @@
 
 mod field;
 mod judges;
+mod themes;
 mod ui;
 
 use clap::Parser;
@@ -24,6 +25,8 @@ pub struct Args {
     solvable: bool,
     #[clap(long, short, default_value = "local", arg_enum)]
     judge: judges::Judge,
+    #[clap(long, short, default_value = "mild", arg_enum)]
+    theme: themes::ThemeChoice,
     #[clap(long, short, help = "See what the solver sees.")]
     cheat: bool,
     #[clap(long, short, help = "Save automatically after every click.")]

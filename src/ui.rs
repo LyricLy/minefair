@@ -4,9 +4,10 @@ use std::fmt::Display;
 use crossterm::{queue, Result};
 use crossterm::{terminal, cursor};
 use crossterm::event::{Event, KeyCode, MouseEventKind, MouseEvent, MouseButton, read, poll, EnableMouseCapture, DisableMouseCapture, KeyModifiers};
-use crossterm::style::{Color, Stylize};
+use crossterm::style::Stylize;
 
 use crate::field::{Field, Cell, adjacents};
+use crate::themes::Theme;
 use crate::Args;
 
 #[derive(PartialEq)]
@@ -26,13 +27,15 @@ struct Camera {
     row: u16,
     mode: DisplayMode,
     dead: bool,
+    theme: Theme,
     save_file: File,
 }
 
 impl Camera {
     fn new(args: Args, save_file: File, (w, h): (u16, u16)) -> Self {
         let mode = if args.cheat { DisplayMode::Risk } else { DisplayMode::Normal };
-        Self { field: Field::new(args), x: -(w as isize) / 2, y: -(h as isize) / 2, col: u16::MAX, row: u16::MAX, dead: false, save_file, mode, w, h }
+        let theme = args.theme.theme();
+        Self { field: Field::new(args), x: -(w as isize) / 2, y: -(h as isize) / 2, col: u16::MAX, row: u16::MAX, dead: false, theme, save_file, mode, w, h }
     }
 
     fn reset(&mut self) {
@@ -62,45 +65,33 @@ impl Camera {
         let (col, row) = (x*3-self.x, y-self.y);
         let (on, c) = match cell {
             Cell::Hidden(flag) => {
-                let on = Color::Rgb { r: 40, g: 40, b: 40 };
+                let on = self.theme.bg_hidden;
                 let c = if flag {
-                    'P'.with(Color::Rgb { r: 255, g: 60, b: 60 }).on(on).bold()
+                    'P'.with(self.theme.risk_color(1.0)).on(on).bold()
                 } else {
                     match self.mode {
                         DisplayMode::Normal => '`'.on(on).dim(),
                         DisplayMode::Risk => {
                             let risk = self.field.cell_risk(p);
                             if risk == 1.0 {
-                                '*'.on(on).with(Color::Rgb { r: 255, g: 0, b: 0 })
+                                '*'.on(on).with(self.theme.risk_color(1.0))
                             } else {
                                 let digit = char::from_digit((15.0*risk).ceil() as u32, 16).unwrap();
-                                let color = Color::Rgb { r: (255.0*risk) as u8, g: (255.0*(1.0-risk)) as u8, b: 0 };
-                                digit.on(on).with(color)
+                                digit.on(on).with(self.theme.risk_color(risk))
                             }
                         },
                         DisplayMode::Judge => match self.field.definite_risk(p) {
-                            Some(true) => '*'.on(on).with(Color::Rgb { r: 255, g: 0, b: 0 }),
-                            Some(false) => '_'.on(on).with(Color::Rgb { r: 0, g: 255, b: 0 }),
-                            None => '?'.on(on).with(Color::Rgb { r: 250, g: 240, b: 50 })
+                            Some(true) => '*'.on(on).with(self.theme.risk_color(1.0)),
+                            Some(false) => '_'.on(on).with(self.theme.risk_color(0.0)),
+                            None => '?'.on(on).with(self.theme.unknown_risk),
                         },
                     }
                 };
                 (on, c)
             },
             Cell::Revealed(n) => {
-                let on = Color::Rgb { r: 120, g: 120, b: 110 };
-                let c = match n {
-                    0 => ' '.on(on),
-                    1 => '1'.with(Color::Rgb { r: 120, g: 250, b: 250 }).on(on).bold(),
-                    2 => '2'.with(Color::Rgb { r: 130, g: 250, b: 120 }).on(on).bold(),
-                    3 => '3'.with(Color::Rgb { r: 250, g: 140, b: 120 }).on(on).bold(),
-                    4 => '4'.with(Color::Rgb { r: 230, g: 100, b: 255 }).on(on).bold(),
-                    5 => '5'.with(Color::Rgb { r: 240, g:  90, b:  20 }).on(on).bold(),
-                    6 => '6'.with(Color::Rgb { r:  50, g: 250, b: 255 }).on(on).bold(),
-                    7 => '7'.with(Color::Rgb { r:  50, g:  50, b:  60 }).on(on).bold(),
-                    8 => '8'.with(Color::Rgb { r: 255, g: 170, b: 230 }).on(on).bold(),
-                    _ => unreachable!(),
-                };
+                let on = self.theme.bg_revealed;
+                let c = if n == 0 { ' '.on(on) } else { char::from_digit(n as u32, 10).unwrap().with(self.theme.nums[n as usize-1]).on(on).bold() };
                 (on, c)
             },
         };
