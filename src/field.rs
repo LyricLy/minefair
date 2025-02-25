@@ -6,7 +6,7 @@ use itertools::Itertools;
 use bincode::{Decode, Encode};
 use std::collections::HashMap;
 
-use crate::judges::Judge;
+use crate::options::Judge;
 use crate::Args;
 
 #[derive(Clone, Copy, Encode, Decode)]

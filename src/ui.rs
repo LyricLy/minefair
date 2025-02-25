@@ -7,7 +7,7 @@ use crossterm::event::{Event, KeyCode, MouseEventKind, MouseEvent, MouseButton, 
 use crossterm::style::Stylize;
 
 use crate::field::{Field, Cell, adjacents};
-use crate::themes::Theme;
+use crate::options::{Theme, IconSet};
 use crate::Args;
 
 #[derive(PartialEq)]
@@ -28,6 +28,7 @@ struct Camera {
     mode: DisplayMode,
     dead: bool,
     theme: Theme,
+    iconset: IconSet,
     save_file: File,
 }
 
@@ -35,7 +36,8 @@ impl Camera {
     fn new(args: Args, save_file: File, (w, h): (u16, u16)) -> Self {
         let mode = if args.cheat { DisplayMode::Risk } else { DisplayMode::Normal };
         let theme = args.theme.theme();
-        Self { field: Field::new(args), x: -(w as isize) / 2, y: -(h as isize) / 2, col: u16::MAX, row: u16::MAX, dead: false, theme, save_file, mode, w, h }
+        let iconset = args.iconset.iconset();
+        Self { field: Field::new(args), x: -(w as isize) / 2, y: -(h as isize) / 2, col: u16::MAX, row: u16::MAX, dead: false, theme, iconset, save_file, mode, w, h }
     }
 
     fn reset(&mut self) {
@@ -67,23 +69,23 @@ impl Camera {
             Cell::Hidden(flag) => {
                 let on = self.theme.bg_hidden;
                 let c = if flag {
-                    'P'.with(self.theme.risk_color(1.0)).on(on).bold()
+                    self.iconset.flag.with(self.theme.risk_color(1.0)).on(on).bold()
                 } else {
                     match self.mode {
-                        DisplayMode::Normal => '`'.on(on).dim(),
+                        DisplayMode::Normal => self.iconset.hidden.on(on).dim(),
                         DisplayMode::Risk => {
                             let risk = self.field.cell_risk(p);
                             if risk == 1.0 {
-                                '*'.on(on).with(self.theme.risk_color(1.0))
+                                self.iconset.mine.on(on).with(self.theme.risk_color(1.0))
                             } else {
                                 let digit = char::from_digit((15.0*risk).ceil() as u32, 16).unwrap();
                                 digit.on(on).with(self.theme.risk_color(risk))
                             }
                         },
                         DisplayMode::Judge => match self.field.definite_risk(p) {
-                            Some(true) => '*'.on(on).with(self.theme.risk_color(1.0)),
-                            Some(false) => '_'.on(on).with(self.theme.risk_color(0.0)),
-                            None => '?'.on(on).with(self.theme.unknown_risk),
+                            Some(true) => self.iconset.mine.on(on).with(self.theme.risk_color(1.0)),
+                            Some(false) => self.iconset.safe.on(on).with(self.theme.risk_color(0.0)),
+                            None => self.iconset.unknown_risk.on(on).with(self.theme.unknown_risk),
                         },
                     }
                 };

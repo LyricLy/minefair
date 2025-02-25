@@ -1,5 +1,16 @@
-use crossterm::style::Color;
 use clap::ArgEnum;
+use bincode::{Decode, Encode};
+use crossterm::style::Color;
+
+#[derive(Clone, ArgEnum, Decode, Encode)]
+pub enum Judge {
+    Random,
+    Strict,
+    Kind,
+    Local,
+    Global,
+    Kaboom,
+}
 
 fn lerp(t: f32, x: f32, y: f32) -> u8 {
     (255.0 * ((1.0-t)*x + t*y)) as u8
@@ -85,6 +96,49 @@ impl ThemeChoice {
                 unknown_risk: Color::Rgb { r: 250, g: 240, b: 50 },
                 safe: (0.0, 1.0, 0.0),
                 dangerous: (1.0, 0.0, 0.0),
+            },
+        }
+    }
+}
+
+pub struct IconSet {
+    pub safe: char,
+    pub mine: char,
+    pub hidden: char,
+    pub flag: char,
+    pub unknown_risk: char,
+}
+
+#[derive(Clone, Copy, ArgEnum)]
+pub enum IconSetChoice {
+    Ascii,
+    Latin1,
+    Unicode,
+}
+
+impl IconSetChoice {
+    pub fn iconset(self) -> IconSet {
+        match self {
+            Self::Ascii => IconSet {
+                safe: '_',
+                mine: '*',
+                hidden: '`',
+                flag: 'P',
+                unknown_risk: '?',
+            },
+            Self::Latin1 => IconSet {
+                safe: 'O',
+                mine: '¤',
+                hidden: '·',
+                flag: '¶',
+                unknown_risk: '?',
+            },
+            Self::Unicode => IconSet {
+                safe: '✓',
+                mine: '✗',
+                hidden: '·',
+                flag: '⚑',
+                unknown_risk: '?',
             },
         }
     }

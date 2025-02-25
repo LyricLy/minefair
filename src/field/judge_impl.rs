@@ -1,5 +1,5 @@
 use rand::random;
-use crate::judges::Judge::*;
+use crate::options::Judge::*;
 use super::*;
 
 impl Field {

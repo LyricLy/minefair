@@ -1,8 +1,7 @@
 #[forbid(unsafe_code)]
 
 mod field;
-mod judges;
-mod themes;
+mod options;
 mod ui;
 
 use clap::Parser;
@@ -24,9 +23,11 @@ pub struct Args {
     #[clap(long, short, help = "Ensure the board is always solvable without 'guessing'.")]
     solvable: bool,
     #[clap(long, short, default_value = "local", arg_enum)]
-    judge: judges::Judge,
+    judge: options::Judge,
     #[clap(long, short, default_value = "mild", arg_enum)]
-    theme: themes::ThemeChoice,
+    theme: options::ThemeChoice,
+    #[clap(long, short, default_value = "ascii", arg_enum)]
+    iconset: options::IconSetChoice,
     #[clap(long, short, help = "See what the solver sees.")]
     cheat: bool,
     #[clap(long, short, help = "Save automatically after every click.")]
