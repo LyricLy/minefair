@@ -40,6 +40,8 @@ e.g. `minefair --judge strict --density 0.3 --solvable --autosave`
 * `--judge`: Pick the judge to use.
 * `--density`: The density of the mines, represented as a probability from 0 to 1.
 * `--solvable`: Ensure solvability with only moves on squares that are guaranteed not to be mines. The game is still fair without this flag, but it will require probabilistic play.
+* `--theme`: Choose a colour scheme to use. `mild` is the default theme, `colourblind` replaces the red-green scale for risk-safety with red-blue, and `high-contrast` makes elements easier to discern.
+* `--iconset`: Choose which characters are used to represent unrevealed tiles, flags, mines, and safe tiles. `ascii`, the default, only uses ASCII characters. `latin1` uses Latin-1 characters which are centred better and perhaps easier to see. `unicode` uses fancy Unicode characters, but might not be to everyone's taste.
 * `--reset` Clear the save file and start from scratch.
 * `--cheat`: See the output from the solver, revealing how safe each square is.
 * `--autosave`: Save automatically after each click. The default is only to save on pressing Ctrl+S or closing the game.
