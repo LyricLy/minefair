@@ -73,7 +73,7 @@ impl Field {
                 i -= 1;
                 unknowns[i].3 = false;
                 for j in small_adjacents(unknowns[i].0, width) {
-                    if let Some(Some((ref mut n, ref mut u))) = small_world.get_mut(j) {
+                    if let Some(Some((n, u))) = small_world.get_mut(j) {
                         if action {
                             *n = n.wrapping_add(1);
                         }
@@ -85,7 +85,7 @@ impl Field {
                 unknowns[i].3 = action;
                 let mut ok = true;
                 for j in small_adjacents(unknowns[i].0, width) {
-                    if let Some(Some((ref mut n, ref mut u))) = small_world.get_mut(j) {
+                    if let Some(Some((n, u))) = small_world.get_mut(j) {
                         if action { 
                             if *n == 0 {
                                 ok = false;
