@@ -1,13 +1,7 @@
-mod solver;
-mod judge_impl;
-
-use rand::random;
-use itertools::Itertools;
 use bincode::{Decode, Encode};
 use std::collections::HashMap;
 
-use crate::options::Judge;
-use crate::Args;
+use crate::judges::Judge;
 
 #[derive(Clone, Copy, Encode, Decode)]
 struct CellData {
@@ -28,11 +22,11 @@ pub enum Cell {
 }
 
 impl Cell {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::Hidden(false)
     }
 
-    fn is_revealed(self) -> bool {
+    pub(crate) fn is_revealed(self) -> bool {
         match self {
             Self::Revealed(_) => true,
             Self::Hidden(_) => false,
@@ -59,12 +53,12 @@ impl CellData {
     }
 }
 
-type Coord = (isize, isize);
+pub(crate) type Coord = (isize, isize);
 const CHUNK_SIZE: isize = 64;
 const CHUNK_AREA: usize = (CHUNK_SIZE * CHUNK_SIZE) as usize;
 
 pub fn adjacents((x, y): Coord) -> impl Iterator<Item=Coord> {
-    [(x-1, y-1), (x, y-1), (x+1, y-1), (x-1, y), (x+1, y), (x-1, y+1), (x, y+1), (x+1, y+1)].into_iter()
+    [(x-1, y-1), (x, y-1), (x+1, y-1), (x+1, y), (x+1, y+1), (x, y+1), (x-1, y+1), (x-1, y)].into_iter()
 }
 
 fn chunk_point((x, y): Coord) -> (Coord, usize) {
@@ -73,18 +67,18 @@ fn chunk_point((x, y): Coord) -> (Coord, usize) {
     (chunk, point as usize)
 }
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Clone)]
 pub struct Field {
     chunks: HashMap<Coord, [CellData; CHUNK_AREA]>,
-    risk_cache: HashMap<Coord, f32>,
-    density: f32,
-    judge: Judge,
-    solvable: bool,
+    pub(crate) risk_cache: HashMap<Coord, f32>,
+    pub(crate) density: f32,
+    pub(crate) judge: Judge,
+    pub(crate) solvable: bool,
 }
 
 impl Field {
-    pub fn new(args: Args) -> Self {
-        Self { chunks: HashMap::new(), risk_cache: HashMap::new(), density: args.density, judge: args.judge, solvable: args.solvable }
+    pub fn new(density: f32, judge: Judge, solvable: bool) -> Self {
+        Self { chunks: HashMap::new(), risk_cache: HashMap::new(), density, judge, solvable }
     }
 
     pub fn get(&self, point: Coord) -> Cell {
@@ -100,7 +94,7 @@ impl Field {
         self.risk_cache.clear();
     }
 
-    fn set(&mut self, point: Coord, cell: Cell) {
+    pub(crate) fn set(&mut self, point: Coord, cell: Cell) {
         let (chunk_coord, idx) = chunk_point(point);
         let chunk = self.chunks.entry(chunk_coord).or_insert_with(|| [Cell::new().to_data(); CHUNK_AREA]);
         chunk[idx] = cell.to_data();
@@ -110,6 +104,12 @@ impl Field {
         if let Cell::Hidden(p) = self.get(point) {
             self.set(point, Cell::Hidden(!p));
         }
+    }
+}
+
+impl Default for Field {
+    fn default() -> Self {
+        Self::new(0.3, Judge::Kind, false)
     }
 }
 
@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     fn field_permanence() {
-        let mut field = Field::new();
+        let mut field = Field::default();
         let cell = Cell::Revealed(3);
         let point = (0, 2);
         field.set(point, cell);
@@ -135,14 +135,14 @@ mod tests {
 
     #[test]
     fn uninitialized() {
-        let field = Field::new();
+        let field = Field::default();
         let point = (0, 2);
         assert_eq!(field.get(point), Cell::new());
     }
 
     #[test]
     fn negative_index() {
-        let mut field = Field::new();
+        let mut field = Field::default();
         let cell = Cell::Hidden(false);
         let point = (-2, 0);
         field.set(point, cell);
@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn barrage() {
-        let mut field = Field::new();
+        let mut field = Field::default();
         for x in -128..=128 {
             for y in -128..=128 {
                 field.set((x, y), Cell::Revealed(0));

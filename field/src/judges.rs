@@ -1,13 +1,25 @@
+use bincode::{Decode, Encode};
+use clap::ValueEnum;
 use rand::random;
-use crate::options::Judge::*;
-use super::*;
+use crate::field::*;
+
+#[derive(Clone, ValueEnum, Decode, Encode)]
+pub enum Judge {
+    Random,
+    Strict,
+    Kind,
+    Local,
+    Global,
+    Kaboom,
+}
+use Judge::*;
 
 impl Field {
     fn global_clear(&self, risk: f32) -> bool {
-        risk <= self.density && self.risk_cache.values().all(|&v| risk <= v)
+        risk < 1.0 && risk <= self.density && self.risk_cache.values().all(|&v| risk <= v)
     }
 
-    pub(super) fn is_clear(&self, point: Coord) -> bool {
+    pub(crate) fn is_clear(&self, point: Coord) -> bool {
         let risk = self.cell_risk(point);
         match self.judge {
             Random => random::<f32>() > risk,
@@ -17,7 +29,7 @@ impl Field {
                 if !self.risk_cache.contains_key(&point) {
                     self.global_clear(risk)
                 } else {
-                    risk != 1.0 && self.group_from(point, false).into_iter().all(|c| risk <= *self.risk_cache.get(&c).unwrap())
+                    risk != 1.0 && self.group_from(vec![point], false).into_iter().all(|c| risk <= *self.risk_cache.get(&c).unwrap())
                 }
             },
             Global => self.global_clear(risk),
@@ -47,5 +59,9 @@ impl Field {
             },
             _ => Some(!self.is_clear(point)),
         }
+    }
+
+    pub fn safe_frontier(&self) -> Vec<Coord> {
+        self.risk_cache.keys().copied().filter(|&p| self.definite_risk(p) == Some(false)).collect()
     }
 }

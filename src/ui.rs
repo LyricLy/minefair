@@ -1,12 +1,14 @@
 use std::io::{stdout, Write, Seek};
 use std::fs::File;
 use std::fmt::Display;
+use std::collections::VecDeque;
+use std::panic;
 use crossterm::{queue, Result};
 use crossterm::{terminal, cursor};
 use crossterm::event::{Event, KeyCode, MouseEventKind, MouseEvent, MouseButton, read, poll, EnableMouseCapture, DisableMouseCapture, KeyModifiers};
 use crossterm::style::Stylize;
 
-use crate::field::{Field, Cell, adjacents};
+use minefair_field::{Field, Cell, adjacents};
 use crate::options::{Theme, IconSet};
 use crate::Args;
 
@@ -37,7 +39,7 @@ impl Camera {
         let mode = if args.cheat { DisplayMode::Risk } else { DisplayMode::Normal };
         let theme = args.theme.theme();
         let iconset = args.iconset.iconset();
-        Self { field: Field::new(args), x: -(w as isize) / 2, y: -(h as isize) / 2, col: u16::MAX, row: u16::MAX, dead: false, theme, iconset, save_file, mode, w, h }
+        Self { field: Field::new(args.density, args.judge, args.solvable), x: -(w as isize) / 2, y: -(h as isize) / 2, col: u16::MAX, row: u16::MAX, dead: false, theme, iconset, save_file, mode, w, h }
     }
 
     fn reset(&mut self) {
@@ -58,7 +60,7 @@ impl Camera {
             self.col = col as u16;
             self.row = row as u16;
         }
-        print!("{}", c);
+        print!("{c}");
         self.col += 1;
     }
 
@@ -118,17 +120,17 @@ impl Camera {
         if self.dead {
             return;
         }
-        let mut stack = Vec::new();
-        let pos = self.clicked_cell(col, row);
-        match self.field.get(pos) {
-            Cell::Revealed(n) if n as usize == adjacents(pos).filter(|&x| self.field.get(x) == Cell::Hidden(true)).count() => {
-                stack.extend(adjacents(pos).filter(|&x| self.field.get(x) ==Cell::Hidden(false)));
+        let mut queue = VecDeque::new();
+        let clicked = self.clicked_cell(col, row);
+        match self.field.get(clicked) {
+            Cell::Revealed(n) if n as usize == adjacents(clicked).filter(|&x| self.field.get(x) == Cell::Hidden(true)).count() => {
+                queue.extend(adjacents(clicked).filter(|&x| self.field.get(x) == Cell::Hidden(false)));
             }
-            _ => stack.push(pos),
+            _ => queue.push_back(clicked),
         }
         let mut done = 0;
-        while !stack.is_empty() && done < 1000 {
-            let pos = stack.pop().unwrap();
+        while !queue.is_empty() && done < 2401 {
+            let pos = queue.pop_front().unwrap();
             match self.field.get(pos) {
                 Cell::Hidden(true) => continue,
                 Cell::Revealed(_) => continue,
@@ -137,7 +139,7 @@ impl Camera {
             match self.field.reveal_cell(pos) {
                 Ok(n) => {
                     if n == 0 {
-                        stack.extend(adjacents(pos));
+                        queue.extend(adjacents(pos));
                     }
                     if self.mode == DisplayMode::Normal {
                         self.show_cell(pos);
@@ -186,9 +188,22 @@ impl Camera {
     }
 }
 
+fn fix_terminal() -> Result<()> {
+    queue!(stdout(), cursor::Show, terminal::EnableLineWrap, terminal::LeaveAlternateScreen, DisableMouseCapture)?;
+    stdout().flush()?;
+    terminal::disable_raw_mode()?;
+    Ok(())
+}
+
 pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
     terminal::enable_raw_mode()?;
     queue!(stdout(), terminal::EnterAlternateScreen, terminal::DisableLineWrap, cursor::Hide, EnableMouseCapture)?;
+
+    let prev_hook = panic::take_hook();
+    panic::set_hook(Box::new(move |info| {
+        let _ = fix_terminal();
+        prev_hook(info);
+    }));
 
     let exists = save_path.exists();
     let file = std::fs::File::options().read(true).write(true).create(true).truncate(false).open(save_path);
@@ -271,8 +286,6 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
     }
 
     cam.save();
-    queue!(stdout(), cursor::Show, terminal::EnableLineWrap, terminal::LeaveAlternateScreen, DisableMouseCapture)?;
-    stdout().flush()?;
-    terminal::disable_raw_mode()?;
+    fix_terminal()?;
     Ok(())
 }

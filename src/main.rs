@@ -1,6 +1,5 @@
 #[forbid(unsafe_code)]
 
-mod field;
 mod options;
 mod ui;
 
@@ -18,15 +17,15 @@ fn parse_density(s: &str) -> Result<f32, &'static str> {
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
-    #[clap(long, short, default_value = "0.22", help = "The density of mines, between 0 and 1.", parse(try_from_str = parse_density))]
+    #[clap(long, short, default_value = "0.22", help = "The density of mines, between 0 and 1.", value_parser = parse_density)]
     density: f32,
     #[clap(long, short, help = "Ensure the board is always solvable without 'guessing'.")]
     solvable: bool,
-    #[clap(long, short, default_value = "local", arg_enum)]
-    judge: options::Judge,
-    #[clap(long, short, default_value = "mild", arg_enum)]
+    #[clap(long, short, default_value = "local", value_enum)]
+    judge: minefair_field::Judge,
+    #[clap(long, short, default_value = "mild", value_enum)]
     theme: options::ThemeChoice,
-    #[clap(long, short, default_value = "ascii", arg_enum)]
+    #[clap(long, short, default_value = "ascii", value_enum)]
     iconset: options::IconSetChoice,
     #[clap(long, short, help = "See what the solver sees.")]
     cheat: bool,
@@ -37,7 +36,6 @@ pub struct Args {
     #[clap(
         help = "The path to the save file. Will be created if it doesn't exist. Defaults to the value of MINEFAIR_SAVE if set, or to a reasonable platform-dependent config folder.",
         env = "MINEFAIR_SAVE",
-        parse(from_os_str)
     )]
     save_path: Option<std::path::PathBuf>,
 }

@@ -10,8 +10,7 @@ edition = "2024"
 
 [dependencies]
 crossterm = "0.22.1"
-rand = "0.8.4"
-itertools = "0.10.3"
 directories = "4.0.1"
-bincode = { version = "2.0.0-beta.1", features = ["derive"] }
-clap = { version = "3.0.10", features = ["derive", "wrap_help", "env"] }
+bincode = { version = "2.0.1", features = ["derive"] }
+clap = { version = "4.5.36", features = ["derive", "wrap_help", "env"] }
+minefair_field = { path = "field" }

@@ -1,0 +1,19 @@
+[package]
+name = "minefair_field"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+bincode = { version = "2.0.1", features = ["derive"] }
+itertools = "*"
+
+# trait impls
+rand = { version = "0.9.0", features = ["alloc"] }
+clap = { version = "4.5.36", features = ["derive"] }
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "benchmarks"
+harness = false

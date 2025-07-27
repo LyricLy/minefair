@@ -1,16 +1,5 @@
-use clap::ArgEnum;
-use bincode::{Decode, Encode};
+use clap::ValueEnum;
 use crossterm::style::Color;
-
-#[derive(Clone, ArgEnum, Decode, Encode)]
-pub enum Judge {
-    Random,
-    Strict,
-    Kind,
-    Local,
-    Global,
-    Kaboom,
-}
 
 fn lerp(t: f32, x: f32, y: f32) -> u8 {
     (255.0 * ((1.0-t)*x + t*y)) as u8
@@ -35,7 +24,7 @@ impl Theme {
     }
 }
 
-#[derive(Clone, Copy, ArgEnum)]
+#[derive(Clone, Copy, ValueEnum)]
 pub enum ThemeChoice {
     Mild,
     #[clap(alias = "colourblind")]
@@ -109,7 +98,7 @@ pub struct IconSet {
     pub unknown_risk: char,
 }
 
-#[derive(Clone, Copy, ArgEnum)]
+#[derive(Clone, Copy, ValueEnum)]
 pub enum IconSetChoice {
     Ascii,
     Latin1,
