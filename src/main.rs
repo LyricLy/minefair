@@ -23,7 +23,7 @@ pub struct Args {
     solvable: bool,
     #[clap(long, short, default_value = "local", value_enum)]
     judge: minefair_field::Judge,
-    #[clap(long, short, default_value = "mild", value_enum)]
+    #[clap(long, short, default_value = "frappe", value_enum)]
     theme: options::ThemeChoice,
     #[clap(long, short, default_value = "ascii", value_enum)]
     iconset: options::IconSetChoice,

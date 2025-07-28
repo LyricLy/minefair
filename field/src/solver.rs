@@ -150,7 +150,7 @@ impl Field {
             unconst_num_probs[num as usize] += self.density.powi(num) * (1.0 - self.density).powi(unconstrained.len() as i32 - num);
         }
 
-        // Proportion of valid placements by the number (not including unconstrained mines) they show on the target cell.
+        // proportion of valid placements by the number (not including unconstrained mines) they show on the target cell
         let mut valid_by_num = [0.0; 9];
 
         let mut i = 0;
@@ -220,9 +220,9 @@ impl Field {
             }
         }
 
-        // The chance of each number appearing when the target cell is revealed.
+        // chance of each number appearing when the target cell is revealed
         let mut num_probs = [0.0; 9];
-        // Like valid_by_num, but for unconstrained mines.
+        // like valid_by_num, but for unconstrained mines
         let mut unconst_by_num = [0.0; 9];
 
         for (i, x) in valid_by_num.into_iter().enumerate() {
