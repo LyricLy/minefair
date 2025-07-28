@@ -58,7 +58,7 @@ const CHUNK_SIZE: isize = 64;
 const CHUNK_AREA: usize = (CHUNK_SIZE * CHUNK_SIZE) as usize;
 
 pub fn adjacents((x, y): Coord) -> impl Iterator<Item=Coord> {
-    [(x-1, y-1), (x, y-1), (x+1, y-1), (x+1, y), (x+1, y+1), (x, y+1), (x-1, y+1), (x-1, y)].into_iter()
+    [(x, y-1), (x+1, y-1), (x+1, y), (x+1, y+1), (x, y+1), (x-1, y+1), (x-1, y), (x-1, y-1)].into_iter()
 }
 
 fn chunk_point((x, y): Coord) -> (Coord, usize) {

@@ -19,7 +19,7 @@ fn parse_density(s: &str) -> Result<f32, &'static str> {
 pub struct Args {
     #[clap(long, short, default_value = "0.22", help = "The density of mines, between 0 and 1.", value_parser = parse_density)]
     density: f32,
-    #[clap(long, short, help = "Ensure the board is always solvable without 'guessing'.")]
+    #[clap(long, short, help = "Try to keep the board solvable without guessing. Doesn't always work and often has boring effects.")]
     solvable: bool,
     #[clap(long, short, default_value = "local", value_enum)]
     judge: minefair_field::Judge,

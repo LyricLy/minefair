@@ -150,7 +150,7 @@ impl Field {
             unconst_num_probs[num as usize] += self.density.powi(num) * (1.0 - self.density).powi(unconstrained.len() as i32 - num);
         }
 
-        // Proportion of valid placements by the number (including unconstrained mines) they show on the target cell.
+        // Proportion of valid placements by the number (not including unconstrained mines) they show on the target cell.
         let mut valid_by_num = [0.0; 9];
 
         let mut i = 0;
@@ -222,7 +222,7 @@ impl Field {
 
         // The chance of each number appearing when the target cell is revealed.
         let mut num_probs = [0.0; 9];
-        // Like valid_by_num, but for the unconstrained cells.
+        // Like valid_by_num, but for unconstrained mines.
         let mut unconst_by_num = [0.0; 9];
 
         for (i, x) in valid_by_num.into_iter().enumerate() {
@@ -233,24 +233,45 @@ impl Field {
             }
         }
 
+        let weights = if self.solvable && self.risk_cache.values().all(|&v| v > 0.0)
+        // prefer a possibility with safe cells if one exists, since there are none left
+        && let safe_havers = std::array::from_fn::<_, 9, _>(|num| {
+            unknowns.iter().any(|&(_, counts, _)| {
+                for (i, x) in counts[0..=num].iter().enumerate() {
+                    if x * unconst_num_probs[num-i] != 0.0 {
+                        return false;
+                    }
+                }
+                true
+            }) || !unconstrained.is_empty() && unconst_by_num[num] == 0.0
+        }) && safe_havers.iter().any(|&x| x) {
+            let mut new_probs = num_probs;
+            for (i, x) in safe_havers.into_iter().enumerate() {
+                if !x {
+                    new_probs[i] = 0.0;
+                }
+            }
+            new_probs
+        } else {
+            num_probs
+        };
+
         let num = if self.risk_cache.is_empty() && num_probs[0] != 0.0 {
             // first click always gives you a 0
             0
         } else {
-            WeightedIndex::new(num_probs).unwrap().sample(&mut rand::rng())
+            WeightedIndex::new(weights).unwrap().sample(&mut rand::rng())
         };
 
         // finally just plug in risks
         for (i, counts, _) in unknowns {
             // `counts` does not take into account possible unconstrained mines yet, so fix that with the same logic as for `valid_by_num`
-            let mut final_counts = [0.0; 9];
-            for (i, x) in counts.into_iter().enumerate() {
-                for (j, y) in unconst_num_probs[0..9-i].iter().enumerate() {
-                    final_counts[i+j] += x * y;
-                }
+            let mut final_count = 0.0;
+            for (i, x) in counts[0..=num].iter().enumerate() {
+                final_count += x * unconst_num_probs[num-i];
             }
 
-            let weight = final_counts[num] / num_probs[num];
+            let weight = final_count / num_probs[num];
             self.risk_cache.insert(world.position_of(i), weight);
         }
 
@@ -309,28 +330,27 @@ mod tests {
             assert!(risk.is_finite() && risk >= 0.0 && risk <= 1.0, "risk {:?} is not sane", risk);
         }
 
-        let mut surrounding_info: HashMap<Coord, (u8, u8)> = HashMap::new();
+        let mut surrounding_info: HashMap<Coord, (u8, u8, u8)> = HashMap::new();
 
         for (&point, &risk) in field.risk_cache.iter() {
-            if risk != 0.0 && risk != 1.0 {
-                continue;
-            }
-
             for neighbour in adjacents(point) {
                 if field.get(neighbour).is_revealed() {
                     let e = surrounding_info.entry(neighbour).or_default();
                     if risk == 0.0 {
                         e.0 += 1;
-                    } else {
+                    } else if risk == 1.0 {
                         e.1 += 1;
+                    } else {
+                        e.2 += 1;
                     }
                 }
             }
         }
 
-        for (point, (conf_safes, conf_mines)) in surrounding_info {
+        for (point, (conf_safes, conf_mines, others)) in surrounding_info {
             let Cell::Revealed(num) = field.get(point) else { unreachable!() };
             assert!(conf_mines <= num);
+            assert!(conf_mines+others >= num);
             assert!(conf_safes <= 8 - num);
         }
     }
