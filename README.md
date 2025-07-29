@@ -16,7 +16,8 @@ There is also an optional flag that will ensure that the generated board is alwa
 * `local` - A more forgiving version of `global` and the default judge. Acts like `global`, but only considers *logical regions*: if some tiles are completely logically indepedent from the tile being clicked (because they are separated by guaranteed mines), they are not considered for the purposes of finding the move with the best probability. While `global` may punish you for making a slightly risky click because there is a safe tile on the other side of the map, `local` is more lenient in these scenarios.
 * `kind` - Accepts any move that has a mine probability of less than 1.
 * `strict` - Only accepts moves that have a mine probability of 0.
-* `kaboom` - Imitates the rules of [Kaboom](https://pwmarcz.pl/kaboom/), another fair Minesweeper implementation. If there are any tiles that are 100% safe, you must click one of those. Otherwise you can click any tile that isn't guaranteed to be a mine.
+* `kaboom-global` (or `kaboom`) - Imitates the rules of [Kaboom](https://pwmarcz.pl/kaboom/), another fair Minesweeper implementation. If there are any tiles that are 100% safe, you must click one of those. Otherwise you can click any tile that isn't guaranteed to be a mine.
+* `kaboom-local` - `kaboom-local` is to `kaboom-global` what `local` is to `global`. It uses the same rules, but only takes the logical region of the clicked tile into account.
 
 # Controls
 * Use WASD to pan the camera. The scroll wheel changes the speed. You can also drag with the mouse to pan.

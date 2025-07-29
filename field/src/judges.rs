@@ -10,7 +10,9 @@ pub enum Judge {
     Kind,
     Local,
     Global,
-    Kaboom,
+    #[clap(alias = "kaboom")]
+    KaboomGlobal,
+    KaboomLocal,
 }
 use Judge::*;
 
@@ -33,13 +35,22 @@ impl Field {
                 }
             },
             Global => self.global_clear(risk),
-            Kaboom => {
+            KaboomGlobal => {
                 if risk == 1.0 {
                     false
                 } else if risk == 0.0 {
                     true
                 } else {
                     self.risk_cache.contains_key(&point) && self.risk_cache.values().all(|&x| x != 0.0)
+                }
+            },
+            KaboomLocal => {
+                if risk == 1.0 {
+                    false
+                } else if risk == 0.0 {
+                    true
+                } else {
+                    self.risk_cache.contains_key(&point) && self.group_from(vec![point], false).into_iter().all(|c| *self.risk_cache.get(&c).unwrap() != 0.0)
                 }
             },
         }
