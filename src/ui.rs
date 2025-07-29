@@ -80,7 +80,7 @@ impl Camera {
                             if risk == 1.0 {
                                 self.iconset.mine.on(on).with(self.theme.risk_color(1.0))
                             } else {
-                                let digit = char::from_digit((15.0*risk).ceil() as u32, 16).unwrap();
+                                let digit = char::from_digit((35.0*risk).ceil() as u32, 36).unwrap();
                                 digit.on(on).with(self.theme.risk_color(risk))
                             }
                         },
