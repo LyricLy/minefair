@@ -253,6 +253,8 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
                 _ => {},
             },
             Event::Resize(w, h) => {
+                #[cfg(windows)]
+                let (w, h) = (w+1, h+1);
                 let old_w = std::mem::replace(&mut cam.w, w);
                 let old_h = std::mem::replace(&mut cam.h, h);
                 cam.pan((old_w as isize - w as isize) / 2, (old_h as isize - h as isize) / 2);
