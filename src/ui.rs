@@ -262,7 +262,7 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
                     hold = Some((event.column, event.row));
                     click_active = true;
                 },
-                MouseEventKind::Drag(_) => if let Some((col, row)) = hold {
+                MouseEventKind::Drag(_) => if let Some((col, row)) = hold && (col != event.column || row != event.row) {
                     cam.pan(col as isize - event.column as isize, row as isize - event.row as isize);
                     hold = Some((event.column, event.row));
                     click_active = false;
