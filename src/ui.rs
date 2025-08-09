@@ -1,10 +1,9 @@
-use std::io::{stdout, Write, Seek};
+use std::io::{stdout, Write, Seek, Result};
 use std::fs::File;
 use std::fmt::Display;
 use std::collections::VecDeque;
 use std::panic;
-use crossterm::{queue, Result};
-use crossterm::{terminal, cursor};
+use crossterm::{queue, terminal, cursor};
 use crossterm::event::{Event, KeyCode, MouseEventKind, MouseEvent, MouseButton, read, poll, EnableMouseCapture, DisableMouseCapture, KeyModifiers};
 use crossterm::style::Stylize;
 
@@ -253,8 +252,6 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
                 _ => {},
             },
             Event::Resize(w, h) => {
-                #[cfg(windows)]
-                let (w, h) = (w+1, h+1);
                 let old_w = std::mem::replace(&mut cam.w, w);
                 let old_h = std::mem::replace(&mut cam.h, h);
                 cam.pan((old_w as isize - w as isize) / 2, (old_h as isize - h as isize) / 2);
@@ -284,6 +281,7 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
                 MouseEventKind::ScrollUp => if speed < 10 { speed += 1 },
                 _ => {},
             },
+            _ => {},
         }
     }
 
