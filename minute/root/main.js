@@ -33,8 +33,9 @@ function drawPuzzle(grid, puzzle) {
                 if (value) {
                     div.textContent = value;
                     div.setAttribute("data-val", value.toString());
+                } else {
+                    div.addEventListener("click", click(puzzle));
                 }
-                div.addEventListener("click", click(puzzle));
                 cell.appendChild(div);
             }
             row.appendChild(cell);
