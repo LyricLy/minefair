@@ -27,6 +27,14 @@ a {
     padding-bottom: 85px;
 }
 
+.low-density {
+    color: #a6d189;
+}
+
+.high-density {
+    color: #e78284;
+}
+
 .report {
     visibility: hidden;
 

@@ -11,6 +11,13 @@ function reportOf(grid) {
 
 function drawPuzzle(grid, puzzle) {
     reportOf(grid).addEventListener("click", copyReport(puzzle));
+
+    const density = statusOf(grid).previousElementSibling;
+    density.textContent = `${(puzzle.density*100).toFixed(2)}%`;
+    density.classList.remove("low-density");
+    density.classList.remove("high-density");
+    density.classList.add(puzzle.density < 0.5 ? "low-density" : "high-density");
+
     const body = document.createElement("tbody");
     for (let y = 0; y < puzzle.height; y++) {
         const row = document.createElement("tr");
