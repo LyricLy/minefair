@@ -1,0 +1,140 @@
+@font-face {
+    font-family: "Arimo",
+    src: url("Arimo-VariableFont_wght.ttf");
+}
+
+body {
+    width: 100%;
+    max-width: 500px;
+    margin: auto;
+    background: #292c3c;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #c6d0f5;
+    font-size: 18px;
+    font-family: Arimo, sans-serif;
+}
+
+a {
+    color: #8caaee;
+}
+
+.game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 85px;
+}
+
+.report {
+    visibility: hidden;
+
+    &.revealed {
+        visibility: visible;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+}
+
+table {
+    border-radius: 6px;
+    padding: 2px;
+}
+
+td {
+    padding: 1px;
+
+    div {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        aspect-ratio: 1.375 / 1;
+        width: 70px;
+        text-align: center;
+        font-weight: bold;
+        border-radius: 6px;
+        background: #949cbb;
+        font-size: 36px;
+        user-select: none;
+        -webkit-user-select: none;
+
+        &.risk-shown {
+            transition: all 0.1s ease;
+            transition-property: background-color, transform, box-shadow;
+            --risk-color: color-mix(in oklch, #a6d189, #e78284 var(--riskiness));
+            font-size: 24px;
+
+            &:not(.best) {
+                background: #737994;
+                color: var(--risk-color);
+
+                &.clicked {
+                    background: #957277;
+                }
+            }
+
+            &.best {
+                background: var(--risk-color);
+                box-shadow: black 0 0 3px;
+                color: #fff;
+                transform: scale(1.3);
+            }
+        }
+
+        img {
+            height: 32px;
+        }
+
+        &:not([data-val]):not(.risk-shown) {
+            transition: transform 0.05s;
+            cursor: pointer;
+
+            &:active {
+                transform: scale(0.95);
+            }
+
+            &:hover:not(:active) {
+                transform: scale(1.05);
+                box-shadow: black 0 0 3px;
+            }
+        }
+
+        &[data-val] {
+            background: #414559;
+        }
+
+        &[data-val="1"] {
+            color: #baaaee;
+        }
+
+        &[data-val="2"] {
+            color: #a6d189;
+        }
+
+        &[data-val="3"] {
+            color: #e78284;
+        }
+
+        &[data-val="4"] {
+            color: #ca9ee6;
+        }
+
+        &[data-val="5"] {
+            color: #ef9f76;
+        }
+
+        &[data-val="6"] {
+            color: #81c8be;
+        }
+
+        &[data-val="7"] {
+            color: #c6d0f5;
+        }
+
+        &[data-val="8"] {
+            color: #eebebe;
+        }
+    }
+}

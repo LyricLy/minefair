@@ -135,8 +135,8 @@ impl Camera {
                 Cell::Revealed(_) => continue,
                 _ => {},
             };
-            match self.field.reveal_cell(pos) {
-                Ok(n) => {
+            match self.field.reveal_cell_first_zero(pos) {
+                Some(n) => {
                     if n == 0 {
                         queue.extend(adjacents(pos));
                     }
@@ -144,7 +144,7 @@ impl Camera {
                         self.show_cell(pos);
                     }
                 },
-                Err(()) => {
+                None => {
                     self.dead = true;
                     self.mode = DisplayMode::Judge;
                     self.draw_entire_board();

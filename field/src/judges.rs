@@ -1,16 +1,16 @@
 use bincode::{Decode, Encode};
-use clap::ValueEnum;
 use rand::random;
 use crate::field::*;
 
-#[derive(Clone, ValueEnum, Decode, Encode)]
+#[derive(Clone, Decode, Encode)]
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum Judge {
     Random,
     Strict,
     Kind,
     Local,
     Global,
-    #[clap(alias = "kaboom")]
+    #[cfg_attr(feature = "clap", clap(alias = "kaboom"))]
     KaboomGlobal,
     KaboomLocal,
 }

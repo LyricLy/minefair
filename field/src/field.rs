@@ -105,6 +105,14 @@ impl Field {
             self.set(point, Cell::Hidden(!p));
         }
     }
+
+    pub fn density(&self) -> f32 {
+        self.density
+    }
+
+    pub fn risks(&self) -> &HashMap<Coord, f32> {
+        &self.risk_cache
+    }
 }
 
 impl Default for Field {

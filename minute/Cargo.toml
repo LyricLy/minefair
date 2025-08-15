@@ -1,0 +1,8 @@
+[package]
+name = "minute-minefair"
+edition = "2024"
+
+[dependencies]
+rand = { version = "0.9.2", features = ["alloc"] }
+bincode = "2.0.1"
+minefair_field = { path = "../field" }

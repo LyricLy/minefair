@@ -81,7 +81,15 @@ impl Field {
         group
     }
 
-    fn solve_from(&mut self, point: Coord) -> u8 {
+    pub fn is_one_group(&self) -> bool {
+        let group_candidates: Vec<_> = self.risk_cache.iter().filter_map(|(&c, &r)| (r != 0.0 && r != 1.0).then_some(c)).collect();
+        if group_candidates.is_empty() {
+            return true;
+        }
+        self.group_from(vec![group_candidates[0]], true).len() == group_candidates.len()
+    }
+
+    fn solve_from(&mut self, point: Coord, first_zero: bool) -> u8 {
         let mut stack: Vec<Coord> = adjacents(point).collect();
         stack.push(point);
         let group = self.group_from(stack, true);
@@ -256,7 +264,7 @@ impl Field {
             num_probs
         };
 
-        let num = if self.risk_cache.is_empty() && num_probs[0] != 0.0 {
+        let num = if first_zero && self.risk_cache.is_empty() && num_probs[0] != 0.0 {
             // first click always gives you a 0
             0
         } else {
@@ -296,17 +304,25 @@ impl Field {
         }
     }
 
-    pub fn reveal_cell(&mut self, point: (isize, isize)) -> Result<u8, ()> {
+    fn reveal_cell_internal(&mut self, point: Coord, first_zero: bool) -> Option<u8> {
         if !self.is_clear(point) {
-            return Err(());
+            return None;
         }
 
         self.risk_cache.remove(&point);
 
-        let num = self.solve_from(point);
+        let num = self.solve_from(point, first_zero);
         self.set(point, Cell::Revealed(num));
 
-        Ok(num)
+        Some(num)
+    }
+
+    pub fn reveal_cell(&mut self, point: Coord) -> Option<u8> {
+        self.reveal_cell_internal(point, false)
+    }
+
+    pub fn reveal_cell_first_zero(&mut self, point: Coord) -> Option<u8> {
+        self.reveal_cell_internal(point, true)
     }
 }
 

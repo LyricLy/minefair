@@ -364,7 +364,6 @@ dependencies = [
  "bincode",
  "clap",
  "criterion",
- "itertools",
  "rand",
 ]
 
