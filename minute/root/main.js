@@ -62,7 +62,7 @@ function copyReport(puzzle) {
     return async function () {
         const day = new Date(EPOCH);
         day.setDate(day.getDate() + puzzle.num - 1);
-        const report = `[minute minefair](<https://lyricly.github.io/minute-minefair>) #${puzzle.num} (${day.toISOString().slice(0, 10)})\n${this.textContent.slice(1)}`
+        const report = `[minute minefair](<https://lyricly.github.io/minefair>) #${puzzle.num} (${day.toISOString().slice(0, 10)})\n${this.textContent.slice(1)}`
         await navigator.clipboard.write([new ClipboardItem({"text/plain": report})]);
     };
 }
