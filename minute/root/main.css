@@ -5,7 +5,8 @@
 
 body {
     width: 100%;
-    max-width: 500px;
+    --max-width: 450px;
+    max-width: var(--max-width);
     margin: auto;
     background: #292c3c;
     display: flex;
@@ -21,6 +22,7 @@ a {
 }
 
 .game {
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -49,22 +51,26 @@ a {
 table {
     border-radius: 6px;
     padding: 2px;
+    table-layout: fixed;
+    width: 100%;
+    margin: 0;
 }
 
 td {
     padding: 1px;
+    container-type: size;
 
     div {
         display: flex;
         justify-content: center;
-        align-items: center;
         aspect-ratio: 1.375 / 1;
-        width: 70px;
+        align-items: center;
         text-align: center;
         font-weight: bold;
         border-radius: 6px;
         background: #949cbb;
-        font-size: 36px;
+        --base-size: min(calc(var(--max-width) / 100), 1vw);
+        font-size: calc(8*var(--base-size));
         user-select: none;
         -webkit-user-select: none;
 
@@ -72,7 +78,7 @@ td {
             transition: all 0.1s ease;
             transition-property: background-color, transform, box-shadow;
             --risk-color: color-mix(in oklch, #a6d189, #e78284 var(--riskiness));
-            font-size: 24px;
+            font-size: calc(5*var(--base-size));
 
             &:not(.best) {
                 background: #737994;
@@ -92,7 +98,7 @@ td {
         }
 
         img {
-            height: 32px;
+            height: calc(7*var(--base-size));
         }
 
         &:not([data-val]):not(.risk-shown) {
