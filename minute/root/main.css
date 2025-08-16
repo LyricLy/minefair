@@ -80,7 +80,7 @@ td {
             transition: all 0.1s ease;
             transition-property: background-color, transform, box-shadow;
             --risk-color: color-mix(in oklch, #a6d189, #e78284 var(--riskiness));
-            font-size: calc(5*var(--base-size));
+            font-size: calc(4*var(--base-size));
 
             &:not(.best) {
                 background: #737994;
