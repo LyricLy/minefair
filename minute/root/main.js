@@ -10,7 +10,7 @@ function reportOf(grid) {
 }
 
 function drawPuzzle(grid, puzzle) {
-    reportOf(grid).addEventListener("click", copyReport(puzzle));
+    reportOf(grid).onclick = copyReport(puzzle);
 
     const density = statusOf(grid).previousElementSibling;
     density.textContent = `${(puzzle.density*100).toFixed(2)}%`;
