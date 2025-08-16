@@ -5,7 +5,8 @@
 
 body {
     width: 100%;
-    --max-width: 450px;
+    --max-width: 500px;
+    --base-size: min(calc(var(--max-width) / 100), 1vw);
     max-width: var(--max-width);
     margin: auto;
     background: #292c3c;
@@ -49,7 +50,8 @@ a {
 }
 
 table {
-    border-radius: 6px;
+    border-radius: calc(2*var(--base-size));
+    border-spacing: calc(0.75*var(--base-size));
     padding: 2px;
     table-layout: fixed;
     width: 100%;
@@ -57,20 +59,20 @@ table {
 }
 
 td {
-    padding: 1px;
+    padding: 0;
     container-type: size;
 
     div {
         display: flex;
         justify-content: center;
+        line-height: 0;
         aspect-ratio: 1.375 / 1;
         align-items: center;
         text-align: center;
         font-weight: bold;
         border-radius: 6px;
         background: #949cbb;
-        --base-size: min(calc(var(--max-width) / 100), 1vw);
-        font-size: calc(8*var(--base-size));
+        font-size: calc(7*var(--base-size));
         user-select: none;
         -webkit-user-select: none;
 
@@ -98,7 +100,7 @@ td {
         }
 
         img {
-            height: calc(7*var(--base-size));
+            height: calc(6*var(--base-size));
         }
 
         &:not([data-val]):not(.risk-shown) {
