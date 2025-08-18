@@ -13,8 +13,12 @@ function drawPuzzle(grid, puzzle) {
     const report = reportOf(grid);
     report.onclick = copyReport(puzzle);
     report.classList.remove("revealed");
+    report.textContent = "​";
 
-    const density = statusOf(grid).previousElementSibling;
+    const status = statusOf(grid);
+    status.textContent = "3 tries";
+
+    const density = status.previousElementSibling;
     density.textContent = `${(puzzle.density*100).toFixed(2)}%`;
     density.classList.remove("low-density");
     density.classList.remove("high-density");
@@ -146,8 +150,6 @@ function getPuzzle(view, idx) {
 function reset(grid, view, day) {
     localStorage.setItem("puzzle", day.toString());
     localStorage.setItem("clicks", JSON.stringify([]));
-    reportOf(grid).textContent = "​";
-    statusOf(grid).textContent = "3 tries";
     drawPuzzle(grid, getPuzzle(view, day));
 }
 
