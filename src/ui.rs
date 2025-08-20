@@ -34,6 +34,7 @@ struct Camera {
     iconset: IconSet,
     save_file: File,
     blink: bool,
+    last_time_pass: Option<Instant>,
 }
 
 impl Camera {
@@ -58,6 +59,7 @@ impl Camera {
             iconset: args.iconset.iconset(),
             save_file,
             blink: false,
+            last_time_pass: None,
         }
     }
 
@@ -67,6 +69,7 @@ impl Camera {
         self.y = -(self.h as isize) / 2;
         self.mode = Self::default_mode(self.cheat);
         self.dead = false;
+        self.last_time_pass = None;
         self.draw_entire_board();
     }
 
@@ -88,7 +91,6 @@ impl Camera {
         let (col, row) = (x*3-self.x, y-self.y);
         let (on, c) = match cell {
             Some(Cell::Hidden(flag)) => {
-                let on = self.theme.bg_hidden;
                 let c = match self.mode {
                     _ if flag && !(self.blink && match self.mode {
                         DisplayMode::Risk => self.field.cell_risk(p) != 1.0,
@@ -113,14 +115,14 @@ impl Camera {
                         None => self.iconset.unknown_risk.with(self.theme.unknown_risk),
                     },
                 };
-            (on, c)
+                (self.theme.bg_hidden, c)
             },
             Some(Cell::Revealed(n)) => {
                 let c = if n == 0 { ' '.stylize() } else { char::from_digit(n as u32, 10).unwrap().with(self.theme.nums[n as usize-1]).bold() };
                 (self.theme.bg_revealed, c)
             },
             None => {
-                (self.theme.bg_void, ' '.stylize())
+                (if self.field.is_won() { self.theme.won_void } else { self.theme.void }, ' '.stylize())
             }
         };
         self.show(col, row, ' '.on(on));
@@ -171,14 +173,19 @@ impl Camera {
                     self.dead = true;
                     self.mode = DisplayMode::Judge;
                     self.draw_entire_board();
+                    self.pass_time();
                     return;
                 },
             }
             done += 1;
         }
-        if self.mode != DisplayMode::Normal {
-            self.draw_entire_board();
+        self.init_time();
+        if done >= 1 && self.field.is_won() {
+            self.pass_time();
+        } else if self.mode == DisplayMode::Normal {
+            return;
         }
+        self.draw_entire_board();
     }
 
     fn flag(&mut self, col: u16, row: u16) {
@@ -198,18 +205,44 @@ impl Camera {
         self.draw_entire_board();
     }
 
-    fn load(&mut self) {
-        self.save_file.rewind().expect("failed to rewind");
-        let mut r: Field = bincode::decode_from_std_read(&mut self.save_file, bincode::config::standard()).expect("failed to read save file");
-        std::mem::swap(&mut self.field, &mut r);
+    fn init_time(&mut self) {
+        if !self.field.risks().is_empty() && self.last_time_pass.is_none() {
+            self.last_time_pass = Some(Instant::now());
+        }
+    }
+
+    fn pass_time(&mut self) {
+        if let Some(ltp) = self.last_time_pass {
+            self.field.pass_time(ltp.elapsed());
+            self.last_time_pass = Some(Instant::now());
+        }
     }
 
     fn save(&mut self) {
+        if !self.dead && !self.field.is_won() {
+            self.pass_time();
+        }
         self.save_file.rewind().expect("failed to rewind");
         self.save_file.set_len(0).expect("failed to truncate");
         bincode::encode_into_std_write(&self.field, &mut self.save_file, bincode::config::standard()).expect("failed to write to save file");
         self.save_file.flush().expect("failed to flush");
     }
+
+    fn load(&mut self) {
+        self.save_file.rewind().expect("failed to rewind");
+        let mut r: Field = bincode::decode_from_std_read(&mut self.save_file, bincode::config::standard()).expect("failed to read save file");
+        std::mem::swap(&mut self.field, &mut r);
+        self.init_time();
+    }
+}
+
+fn format_duration(dur: Duration) -> String {
+    let total_secs = dur.as_secs();
+    let days = total_secs / (24*60*60);
+    let hours = total_secs / (60*60) % 24;
+    let minutes = total_secs / 60 % 60;
+    let secs = total_secs % 60;
+    format!("{days}:{hours:02}:{minutes:02}:{secs:02}")
 }
 
 fn fix_terminal() -> Result<()> {
@@ -267,6 +300,7 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
             }
             break;
         }
+
         match ev {
             Event::Key(event) => match event.code {
                 KeyCode::Esc => break,
@@ -325,5 +359,15 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
 
     cam.save();
     fix_terminal()?;
+
+    let status = if cam.dead {
+        "Better luck next time"
+    } else if cam.field.is_won() {
+        "Well done"
+    } else {
+        "See you later"
+    };
+    eprintln!("{status}\n{} tiles revealed\nTotal playtime {}", cam.field.cells_revealed(), format_duration(cam.field.time_elapsed()));
+
     Ok(())
 }

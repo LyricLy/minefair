@@ -1,5 +1,6 @@
 use bincode::{Decode, Encode};
 use std::collections::HashMap;
+use std::time::Duration;
 
 use crate::judges::Judge;
 use crate::cache::RiskCache;
@@ -76,11 +77,19 @@ pub struct Field {
     pub judge: Judge,
     pub(crate) solvable: bool,
     size: Option<(usize, usize)>,
+    cells_revealed: usize,
+    time_elapsed: Duration,
 }
 
 impl Field {
     pub fn new(density: f32, judge: Judge, solvable: bool, size: Option<(usize, usize)>) -> Self {
-        Self { chunks: HashMap::new(), risk_cache: RiskCache::new(), density, judge, solvable, size }
+        Self {
+            chunks: HashMap::new(),
+            risk_cache: RiskCache::new(),
+            density, judge, solvable, size,
+            cells_revealed: 0,
+            time_elapsed: Duration::ZERO,
+        }
     }
 
     fn in_bounds(&self, point: Coord) -> bool {
@@ -102,11 +111,14 @@ impl Field {
     pub fn clear(&mut self) {
         self.chunks.clear();
         self.risk_cache.clear();
+        self.cells_revealed = 0;
     }
 
     pub(crate) fn set(&mut self, point: Coord, cell: Cell) {
         let (chunk_coord, idx) = chunk_point(point);
         let chunk = self.chunks.entry(chunk_coord).or_insert_with(|| [Cell::new().to_data(); CHUNK_AREA]);
+        self.cells_revealed -= chunk[idx].to_cell().is_revealed() as usize;
+        self.cells_revealed += cell.is_revealed() as usize;
         chunk[idx] = cell.to_data();
     }
 
@@ -122,6 +134,22 @@ impl Field {
 
     pub fn risks(&self) -> &RiskCache {
         &self.risk_cache
+    }
+
+    pub fn pass_time(&mut self, time: Duration) {
+        self.time_elapsed += time;
+    }
+
+    pub fn cells_revealed(&self) -> usize {
+        self.cells_revealed
+    }
+
+    pub fn time_elapsed(&self) -> Duration {
+        self.time_elapsed
+    }
+
+    pub fn is_won(&self) -> bool {
+        self.size.is_some_and(|(width, height)| width*height == self.cells_revealed + self.risk_cache.len() && !self.has_safe())
     }
 }
 

@@ -72,6 +72,13 @@ impl Field {
         }
     }
 
+    pub fn has_safe(&self) -> bool {
+        match self.judge {
+            Random | Strict => self.risk_cache.global_best() == 0.0,
+            _ => self.risk_cache.global_best() < 1.0,
+        }
+    }
+
     pub fn safe_frontier(&self) -> Vec<Coord> {
         self.risk_cache.keys().filter(|&p| self.definite_risk(p) == Some(false)).collect()
     }
