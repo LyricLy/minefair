@@ -15,10 +15,6 @@ fn click(rng: &mut impl Rng, field: &mut Field, points: &[(isize, isize)]) -> bo
     true
 }
 
-fn has_safe(field: &Field) -> bool {
-    field.risks().values().any(|&r| r == 0.0)
-}
-
 fn gen_puzzle() -> Field {
     let mut rng = rand::rng();
 
@@ -35,19 +31,19 @@ fn gen_puzzle() -> Field {
         }
 
         for _ in MIN_CLICKS..MAX_CLICKS {
-            if !has_safe(&field) { break }
-            let frontier: Vec<_> = field.risks().iter().filter_map(|(&c, &r)| (r == 0.0).then_some(c)).collect();
+            if field.risks().global_best() > 0.0 { break }
+            let frontier: Vec<_> = field.risks().iter().filter_map(|(c, r)| (r == 0.0).then_some(c)).collect();
             click(&mut rng, &mut field, &frontier);
         }
 
         let best = field.risks().values().min_by(|x, y| x.partial_cmp(y).unwrap()).unwrap();
-        let non_flags = field.risks().values().filter(|&&r| r != 1.0).count();
+        let non_flags = field.risks().values().filter(|&r| r != 1.0).count();
 
-        if *best == 0.0
+        if best == 0.0
         || !field.is_one_group()
         || non_flags < MIN_FRONTIER
         || non_flags > MAX_FRONTIER
-        || field.risks().values().filter(|&&r| r - best < MIN_WINNER_DIFF).count() > 1 {
+        || field.risks().values().filter(|&r| r - best < MIN_WINNER_DIFF).count() > 1 {
             continue;
         }
 
@@ -64,7 +60,7 @@ fn write_field(field: &Field, writer: &mut impl Write) -> Result<()> {
     let mut hx = isize::MIN;
     let mut ly = isize::MAX;
     let mut hy = isize::MIN;
-    for &(x, y) in field.risks().keys() {
+    for (x, y) in field.risks().keys() {
         lx = lx.min(x);
         hx = hx.max(x + 1);
         ly = ly.min(y);
@@ -79,10 +75,8 @@ fn write_field(field: &Field, writer: &mut impl Write) -> Result<()> {
         for x in lx..hx {
             write_float(if let Cell::Revealed(n) = field.get((x, y)) {
                 (n + 2) as f32
-            } else if let Some(&risk) = field.risks().get(&(x, y)) {
-                risk
             } else {
-                -1.0
+                field.risks().get((x, y)).unwrap_or(-1.0)
             }, writer)?;
         }
     }

@@ -62,8 +62,8 @@ impl Field {
         let mut group = Vec::new();
 
         while let Some(p) = stack.pop() {
-            let risk = self.risk_cache.get(&p);
-            if group.contains(&p) || risk == Some(&1.0) || cut_on_safe && risk == Some(&0.0) || self.get(p).is_revealed() {
+            let risk = self.risk_cache.get(p);
+            if group.contains(&p) || risk == Some(1.0) || cut_on_safe && risk == Some(0.0) || self.get(p).is_revealed() {
                 continue;
             }
             for adj in adjacents(p) {
@@ -82,7 +82,7 @@ impl Field {
     }
 
     pub fn is_one_group(&self) -> bool {
-        let group_candidates: Vec<_> = self.risk_cache.iter().filter_map(|(&c, &r)| (r != 0.0 && r != 1.0).then_some(c)).collect();
+        let group_candidates: Vec<_> = self.risk_cache.iter().filter_map(|(c, r)| (r != 0.0 && r != 1.0).then_some(c)).collect();
         if group_candidates.is_empty() {
             return true;
         }
@@ -118,7 +118,7 @@ impl Field {
         // subtract already-known mines from each number
         for y in ly-1 .. hy+1 {
             for x in lx-1 .. hx+1 {
-                if self.risk_cache.get(&(x, y)) == Some(&1.0) {
+                if self.risk_cache.get((x, y)) == Some(1.0) {
                     for adj in adjacents((x, y)) {
                         if let Some(x) = world.index_of(adj).and_then(|i| world.marsh[i].as_mut()) {
                             x.0 -= 1;
@@ -133,7 +133,7 @@ impl Field {
         let mut unconstrained = Vec::new();
         for &pos in &group[1..] {
             // cell is not touching any numbers and is "unconstrained". put these in a separate bucket and do not solve them
-            if !self.risk_cache.contains_key(&pos) {
+            if !self.risk_cache.contains_key(pos) {
                 unconstrained.push(pos);
                 continue;
             }
@@ -241,7 +241,7 @@ impl Field {
             }
         }
 
-        let weights = if self.solvable && self.risk_cache.values().all(|&v| v > 0.0)
+        let weights = if self.solvable && self.risk_cache.global_best() > 0.0
         // prefer a possibility with safe cells if one exists, since there are none left
         && let safe_havers = std::array::from_fn::<_, 9, _>(|num| {
             unknowns.iter().any(|&(_, counts, _)| {
@@ -292,9 +292,9 @@ impl Field {
     }
 
     pub fn cell_risk(&self, point: Coord) -> f32 {
-        if let Some(p) = self.risk_cache.get(&point) {
+        if let Some(p) = self.risk_cache.get(point) {
             // frontier
-            *p
+            p
         } else if self.get(point).is_revealed() || self.risk_cache.is_empty() && self.density < 1.0 {
             // already revealed or first click
             0.0
@@ -309,7 +309,7 @@ impl Field {
             return None;
         }
 
-        self.risk_cache.remove(&point);
+        self.risk_cache.remove(point);
 
         let num = self.solve_from(point, first_zero);
         self.set(point, Cell::Revealed(num));
@@ -342,13 +342,13 @@ mod tests {
             let _ = field.reveal_cell(point);
         }
 
-        for &risk in field.risk_cache.values() {
+        for risk in field.risk_cache.values() {
             assert!(risk.is_finite() && risk >= 0.0 && risk <= 1.0, "risk {:?} is not sane", risk);
         }
 
         let mut surrounding_info: HashMap<Coord, (u8, u8, u8)> = HashMap::new();
 
-        for (&point, &risk) in field.risk_cache.iter() {
+        for (point, risk) in field.risk_cache.iter() {
             for neighbour in adjacents(point) {
                 if field.get(neighbour).is_revealed() {
                     let e = surrounding_info.entry(neighbour).or_default();

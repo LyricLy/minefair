@@ -2,6 +2,7 @@ use bincode::{Decode, Encode};
 use std::collections::HashMap;
 
 use crate::judges::Judge;
+use crate::cache::RiskCache;
 
 #[derive(Clone, Copy, Encode, Decode)]
 struct CellData {
@@ -70,7 +71,7 @@ fn chunk_point((x, y): Coord) -> (Coord, usize) {
 #[derive(Encode, Decode, Clone)]
 pub struct Field {
     chunks: HashMap<Coord, [CellData; CHUNK_AREA]>,
-    pub(crate) risk_cache: HashMap<Coord, f32>,
+    pub(crate) risk_cache: RiskCache,
     pub(crate) density: f32,
     pub(crate) judge: Judge,
     pub(crate) solvable: bool,
@@ -78,7 +79,7 @@ pub struct Field {
 
 impl Field {
     pub fn new(density: f32, judge: Judge, solvable: bool) -> Self {
-        Self { chunks: HashMap::new(), risk_cache: HashMap::new(), density, judge, solvable }
+        Self { chunks: HashMap::new(), risk_cache: RiskCache::new(), density, judge, solvable }
     }
 
     pub fn get(&self, point: Coord) -> Cell {
@@ -110,7 +111,7 @@ impl Field {
         self.density
     }
 
-    pub fn risks(&self) -> &HashMap<Coord, f32> {
+    pub fn risks(&self) -> &RiskCache {
         &self.risk_cache
     }
 }

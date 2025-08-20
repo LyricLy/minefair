@@ -18,7 +18,7 @@ use Judge::*;
 
 impl Field {
     fn global_clear(&self, risk: f32) -> bool {
-        risk < 1.0 && risk <= self.density && self.risk_cache.values().all(|&v| risk <= v)
+        risk < 1.0 && risk <= self.density && risk <= self.risk_cache.global_best()
     }
 
     pub(crate) fn is_clear(&self, point: Coord) -> bool {
@@ -28,10 +28,10 @@ impl Field {
             Kind => risk != 1.0,
             Strict => risk == 0.0,
             Local => {
-                if !self.risk_cache.contains_key(&point) {
+                if !self.risk_cache.contains_key(point) {
                     self.global_clear(risk)
                 } else {
-                    risk != 1.0 && self.group_from(vec![point], false).into_iter().all(|c| risk <= *self.risk_cache.get(&c).unwrap())
+                    risk != 1.0 && self.group_from(vec![point], false).into_iter().all(|c| risk <= self.risk_cache.get(c).unwrap())
                 }
             },
             Global => self.global_clear(risk),
@@ -41,7 +41,7 @@ impl Field {
                 } else if risk == 0.0 {
                     true
                 } else {
-                    self.risk_cache.contains_key(&point) && self.risk_cache.values().all(|&x| x != 0.0)
+                    self.risk_cache.contains_key(point) && self.risk_cache.global_best() > 0.0
                 }
             },
             KaboomLocal => {
@@ -50,7 +50,7 @@ impl Field {
                 } else if risk == 0.0 {
                     true
                 } else {
-                    self.risk_cache.contains_key(&point) && self.group_from(vec![point], false).into_iter().all(|c| *self.risk_cache.get(&c).unwrap() != 0.0)
+                    self.risk_cache.contains_key(point) && self.group_from(vec![point], false).into_iter().all(|c| self.risk_cache.get(c).unwrap() != 0.0)
                 }
             },
         }
@@ -73,6 +73,6 @@ impl Field {
     }
 
     pub fn safe_frontier(&self) -> Vec<Coord> {
-        self.risk_cache.keys().copied().filter(|&p| self.definite_risk(p) == Some(false)).collect()
+        self.risk_cache.keys().filter(|&p| self.definite_risk(p) == Some(false)).collect()
     }
 }
