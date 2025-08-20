@@ -19,7 +19,7 @@ fn gen_puzzle() -> Field {
     let mut rng = rand::rng();
 
     'retry: loop {
-        let mut field = Field::new(rng.random_range(DENSITY_RANGE), Judge::Kind, false);
+        let mut field = Field::new(rng.random_range(DENSITY_RANGE), Judge::Kind, false, None);
 
         let _ = field.reveal_cell((0, 0));
 
@@ -73,7 +73,7 @@ fn write_field(field: &Field, writer: &mut impl Write) -> Result<()> {
 
     for y in ly..hy {
         for x in lx..hx {
-            write_float(if let Cell::Revealed(n) = field.get((x, y)) {
+            write_float(if let Some(Cell::Revealed(n)) = field.get((x, y)) {
                 (n + 2) as f32
             } else {
                 field.risks().get((x, y)).unwrap_or(-1.0)

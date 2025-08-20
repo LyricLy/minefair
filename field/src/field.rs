@@ -75,19 +75,28 @@ pub struct Field {
     pub(crate) density: f32,
     pub judge: Judge,
     pub(crate) solvable: bool,
+    size: Option<(usize, usize)>,
 }
 
 impl Field {
-    pub fn new(density: f32, judge: Judge, solvable: bool) -> Self {
-        Self { chunks: HashMap::new(), risk_cache: RiskCache::new(), density, judge, solvable }
+    pub fn new(density: f32, judge: Judge, solvable: bool, size: Option<(usize, usize)>) -> Self {
+        Self { chunks: HashMap::new(), risk_cache: RiskCache::new(), density, judge, solvable, size }
     }
 
-    pub fn get(&self, point: Coord) -> Cell {
+    fn in_bounds(&self, point: Coord) -> bool {
+        self.size.is_none_or(|(width, height)| {
+            let (width, height) = (width as isize, height as isize);
+            (-width).div_euclid(2) <= point.0 && point.0 < width / 2 && (-height).div_euclid(2) <= point.1 && point.1 < height / 2
+        })
+    }
+
+    pub fn get(&self, point: Coord) -> Option<Cell> {
+        if !self.in_bounds(point) { return None; }
         let (chunk_coord, idx) = chunk_point(point);
-        match self.chunks.get(&chunk_coord) {
+        Some(match self.chunks.get(&chunk_coord) {
             Some(chunk) => chunk[idx].to_cell(),
             None => Cell::new(),
-        }
+        })
     }
 
     pub fn clear(&mut self) {
@@ -102,7 +111,7 @@ impl Field {
     }
 
     pub fn toggle_flag(&mut self, point: Coord) {
-        if let Cell::Hidden(p) = self.get(point) {
+        if let Some(Cell::Hidden(p)) = self.get(point) {
             self.set(point, Cell::Hidden(!p));
         }
     }
@@ -118,7 +127,7 @@ impl Field {
 
 impl Default for Field {
     fn default() -> Self {
-        Self::new(0.3, Judge::Kind, false)
+        Self::new(0.3, Judge::Kind, false, None)
     }
 }
 
@@ -139,14 +148,14 @@ mod tests {
         let cell = Cell::Revealed(3);
         let point = (0, 2);
         field.set(point, cell);
-        assert_eq!(field.get(point), cell);
+        assert_eq!(field.get(point), Some(cell));
     }
 
     #[test]
     fn uninitialized() {
         let field = Field::default();
         let point = (0, 2);
-        assert_eq!(field.get(point), Cell::new());
+        assert_eq!(field.get(point), Some(Cell::new()));
     }
 
     #[test]
@@ -155,7 +164,7 @@ mod tests {
         let cell = Cell::Hidden(false);
         let point = (-2, 0);
         field.set(point, cell);
-        assert_eq!(field.get(point), cell);
+        assert_eq!(field.get(point), Some(cell));
     }
 
     #[test]
@@ -168,7 +177,7 @@ mod tests {
         }
         for x in -128..=128 {
             for y in -128..=128 {
-                assert_eq!(field.get((x, y)), Cell::Revealed(0));
+                assert_eq!(field.get((x, y)), Some(Cell::Revealed(0)));
             }
         }
     }

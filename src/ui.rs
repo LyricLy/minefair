@@ -47,7 +47,7 @@ impl Camera {
 
     fn new(args: Args, save_file: File, (w, h): (u16, u16)) -> Self {
         Self {
-            field: Field::new(args.density, args.judge, args.solvable),
+            field: Field::new(args.density, args.judge, args.solvable, args.bounds),
             w, h,
             x: -(w as isize) / 2, y: -(h as isize) / 2,
             col: u16::MAX, row: u16::MAX,
@@ -87,7 +87,7 @@ impl Camera {
         let cell = self.field.get(p);
         let (col, row) = (x*3-self.x, y-self.y);
         let (on, c) = match cell {
-            Cell::Hidden(flag) => {
+            Some(Cell::Hidden(flag)) => {
                 let on = self.theme.bg_hidden;
                 let c = match self.mode {
                     _ if flag && !(self.blink && match self.mode {
@@ -95,34 +95,36 @@ impl Camera {
                         DisplayMode::Judge => self.field.definite_risk(p) != Some(true),
                         _ => false,
                     }) => {
-                        self.iconset.flag.with(self.theme.risk_color(1.0)).on(on).bold()
+                        self.iconset.flag.with(self.theme.risk_color(1.0)).bold()
                     },
-                    DisplayMode::Normal => self.iconset.hidden.on(on).dim(),
+                    DisplayMode::Normal => self.iconset.hidden.dim(),
                     DisplayMode::Risk => {
                         let risk = self.field.cell_risk(p);
                         if risk == 1.0 {
-                            self.iconset.mine.on(on).with(self.theme.risk_color(1.0))
+                            self.iconset.mine.with(self.theme.risk_color(1.0))
                         } else {
                             let digit = char::from_digit((35.0*risk).ceil() as u32, 36).unwrap();
-                            digit.on(on).with(self.theme.risk_color(risk))
+                            digit.with(self.theme.risk_color(risk))
                         }
                     },
                     DisplayMode::Judge => match self.field.definite_risk(p) {
-                        Some(true) => self.iconset.mine.on(on).with(self.theme.risk_color(1.0)),
-                        Some(false) => self.iconset.safe.on(on).with(self.theme.risk_color(0.0)),
-                        None => self.iconset.unknown_risk.on(on).with(self.theme.unknown_risk),
+                        Some(true) => self.iconset.mine.with(self.theme.risk_color(1.0)),
+                        Some(false) => self.iconset.safe.with(self.theme.risk_color(0.0)),
+                        None => self.iconset.unknown_risk.with(self.theme.unknown_risk),
                     },
                 };
             (on, c)
             },
-            Cell::Revealed(n) => {
-                let on = self.theme.bg_revealed;
-                let c = if n == 0 { ' '.on(on) } else { char::from_digit(n as u32, 10).unwrap().with(self.theme.nums[n as usize-1]).on(on).bold() };
-                (on, c)
+            Some(Cell::Revealed(n)) => {
+                let c = if n == 0 { ' '.stylize() } else { char::from_digit(n as u32, 10).unwrap().with(self.theme.nums[n as usize-1]).bold() };
+                (self.theme.bg_revealed, c)
             },
+            None => {
+                (self.theme.bg_void, ' '.stylize())
+            }
         };
         self.show(col, row, ' '.on(on));
-        self.show(col+1, row, c);
+        self.show(col+1, row, c.on(on));
         self.show(col+2, row, ' '.on(on));
     }
 
@@ -145,19 +147,17 @@ impl Camera {
         let mut queue = VecDeque::new();
         let clicked = self.clicked_cell(col, row);
         match self.field.get(clicked) {
-            Cell::Revealed(n) if n as usize == adjacents(clicked).filter(|&x| self.field.get(x) == Cell::Hidden(true)).count() => {
-                queue.extend(adjacents(clicked).filter(|&x| self.field.get(x) == Cell::Hidden(false)));
+            Some(Cell::Revealed(n)) if n as usize == adjacents(clicked).filter(|&x| self.field.get(x) == Some(Cell::Hidden(true))).count() => {
+                queue.extend(adjacents(clicked).filter(|&x| self.field.get(x) == Some(Cell::Hidden(false))));
             }
             _ => queue.push_back(clicked),
         }
         let mut done = 0;
         while !queue.is_empty() && done < 2401 {
             let pos = queue.pop_front().unwrap();
-            match self.field.get(pos) {
-                Cell::Hidden(true) => continue,
-                Cell::Revealed(_) => continue,
-                _ => {},
-            };
+            if let None | Some(Cell::Hidden(true)) | Some(Cell::Revealed(_)) = self.field.get(pos) {
+                continue;
+            }
             match self.field.reveal_cell_first_zero(pos) {
                 Some(n) => {
                     if n == 0 {

@@ -39,8 +39,9 @@ e.g. `minefair --judge strict --density 0.3 --solvable --autosave`
 
 ## Flags
 * `--judge`: Pick the judge to use.
+* `--bounds`: Limit the board to a finite rectangle.
 * `--density`: The density of the mines, represented as a probability from 0 to 1.
-* `--solvable`: Ensure solvability with only moves on squares that are guaranteed not to be mines. The game is still fair without this flag, but it will require probabilistic play.
+* `--solvable`: Ensure solvability without guessing. The game is still fair without this flag, but requires probabilistic play.
 * `--theme`: Choose a colour scheme to use.
   - `frappe` is the default theme, based on [catppuccin](https://github.com/catppuccin/catppuccin).
   - `legacy` is the old default theme seen in the preview above.

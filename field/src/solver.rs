@@ -1,9 +1,8 @@
-use std::num::Wrapping;
 use rand::prelude::*;
 use rand::distr::weighted::WeightedIndex;
 use crate::field::*;
 
-/// A finite section of a Field, in which each item stores the number of expected mines and adjacent unknowns.
+/// A finite section of a Field, in which each revealed cell stores the number of mines and unknowns neighbouring it.
 struct SmallWorld {
     marsh: Vec<Option<(i8, i8)>>,
     ox: isize,
@@ -19,7 +18,7 @@ impl SmallWorld {
         for y in oy..oy+height as isize {
             for x in ox..ox+width as isize {
                 marsh.push(match field.get((x, y)) {
-                    Cell::Revealed(n) => Some((n as i8, 0)),
+                    Some(Cell::Revealed(n)) => Some((n as i8, 0)),
                     _ => None,
                 });
             }
@@ -50,10 +49,8 @@ impl SmallWorld {
 
     #[inline(always)]
     fn adjacents(&self, point: usize) -> impl Iterator<Item=usize> + 'static {
-        let point = Wrapping(point);
-        let width = Wrapping(self.width);
-        let one = Wrapping(1_usize);
-        [point - width - one, point - width, point - width + one, point - one, point + one, point + width - one, point + width, point + width + one].into_iter().map(|x| x.0)
+        let width = self.width;
+        [point - width - 1, point - width, point - width + 1, point - 1, point + 1, point + width - 1, point + width, point + width + 1].into_iter()
     }
 }
 
@@ -63,11 +60,11 @@ impl Field {
 
         while let Some(p) = stack.pop() {
             let risk = self.risk_cache.get(p);
-            if group.contains(&p) || risk == Some(1.0) || cut_on_safe && risk == Some(0.0) || self.get(p).is_revealed() {
+            if group.contains(&p) || risk == Some(1.0) || cut_on_safe && risk == Some(0.0) || self.get(p).is_none_or(|x| x.is_revealed()) {
                 continue;
             }
             for adj in adjacents(p) {
-                if self.get(adj).is_revealed() {
+                if self.get(adj).is_some_and(|x| x.is_revealed()) {
                     for their_adj in adjacents(adj) {
                         if their_adj != p {
                             stack.push(their_adj);
@@ -295,7 +292,7 @@ impl Field {
         if let Some(p) = self.risk_cache.get(point) {
             // frontier
             p
-        } else if self.get(point).is_revealed() || self.risk_cache.is_empty() && self.density < 1.0 {
+        } else if self.get(point).is_none_or(|x| x.is_revealed()) || self.risk_cache.is_empty() && self.density < 1.0 {
             // already revealed or first click
             0.0
         } else {
@@ -350,7 +347,7 @@ mod tests {
 
         for (point, risk) in field.risk_cache.iter() {
             for neighbour in adjacents(point) {
-                if field.get(neighbour).is_revealed() {
+                if field.get(neighbour).unwrap().is_revealed() {
                     let e = surrounding_info.entry(neighbour).or_default();
                     if risk == 0.0 {
                         e.0 += 1;
@@ -364,7 +361,7 @@ mod tests {
         }
 
         for (point, (conf_safes, conf_mines, others)) in surrounding_info {
-            let Cell::Revealed(num) = field.get(point) else { unreachable!() };
+            let Some(Cell::Revealed(num)) = field.get(point) else { unreachable!() };
             assert!(conf_mines <= num);
             assert!(conf_mines+others >= num);
             assert!(conf_safes <= 8 - num);

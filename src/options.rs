@@ -8,6 +8,7 @@ fn lerp(t: f32, x: f32, y: f32) -> u8 {
 pub struct Theme {
     pub bg_hidden: Color,
     pub bg_revealed: Color,
+    pub bg_void: Color,
     pub nums: [Color; 8],
     pub unknown_risk: Color,
     safe: (f32, f32, f32),
@@ -41,6 +42,7 @@ impl ThemeChoice {
             Self::Frappe => Theme {
                 bg_hidden: Color::Rgb { r: 48, g: 52, b: 70 },
                 bg_revealed: Color::Rgb { r: 98, g: 104, b: 128 },
+                bg_void: Color::Rgb { r: 41, g: 44, b: 60 },
                 nums: [
                     Color::Rgb { r: 140, g: 187, b: 241 },
                     Color::Rgb { r: 166, g: 209, b: 137 },
@@ -58,6 +60,7 @@ impl ThemeChoice {
             Self::Legacy => Theme {
                 bg_hidden: Color::Rgb { r: 40, g: 40, b: 40 },
                 bg_revealed: Color::Rgb { r: 120, g: 120, b: 110 },
+                bg_void: Color::Rgb { r: 170, g: 170, b: 170 },
                 nums: [
                     Color::Rgb { r: 120, g: 250, b: 250 },
                     Color::Rgb { r: 130, g: 250, b: 120 },
@@ -75,6 +78,7 @@ impl ThemeChoice {
             Self::Colorblind => Theme {
                 bg_hidden: Color::Rgb { r: 48, g: 52, b: 70 },
                 bg_revealed: Color::Rgb { r: 98, g: 104, b: 128 },
+                bg_void: Color::Rgb { r: 41, g: 44, b: 60 },
                 nums: [
                     Color::Rgb { r: 140, g: 187, b: 241 },
                     Color::Rgb { r: 166, g: 209, b: 137 },
@@ -92,6 +96,7 @@ impl ThemeChoice {
             Self::HighContrast => Theme {
                 bg_hidden: Color::Rgb { r: 0, g: 0, b: 0 },
                 bg_revealed: Color::Rgb { r: 60, g: 60, b: 60 },
+                bg_void: Color::Rgb { r: 0, g: 0, b: 0 },
                 nums: [
                     Color::Rgb { r:   0, g: 128, b: 255 },
                     Color::Rgb { r:   0, g: 255, b:   0 },
@@ -110,6 +115,7 @@ impl ThemeChoice {
                 // slightly different from the real background colour to replicate the effect of the highlights/borders
                 bg_hidden: Color::Rgb { r: 200, g: 200, b: 200 },
                 bg_revealed: Color::Rgb { r: 188, g: 188, b: 188 },
+                bg_void: Color::Rgb { r: 195, g: 195, b: 195 },
                 nums: [
                     Color::Rgb { r:   0, g:   0, b: 255 },
                     Color::Rgb { r:   0, g: 128, b:   0 },
@@ -127,6 +133,7 @@ impl ThemeChoice {
             Self::BlackAndWhite => Theme {
                 bg_hidden: Color::Grey,
                 bg_revealed: Color::AnsiValue(145),
+                bg_void: Color::Grey,
                 nums: [
                     Color::Black,
                     Color::Black,
