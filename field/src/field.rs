@@ -73,7 +73,7 @@ pub struct Field {
     chunks: HashMap<Coord, [CellData; CHUNK_AREA]>,
     pub(crate) risk_cache: RiskCache,
     pub(crate) density: f32,
-    pub(crate) judge: Judge,
+    pub judge: Judge,
     pub(crate) solvable: bool,
 }
 

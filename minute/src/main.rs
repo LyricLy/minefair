@@ -9,8 +9,8 @@ const MAX_FRONTIER: usize = 18;
 const DENSITY_RANGE: std::ops::RangeInclusive<f32> = 0.4..=0.6;
 const MIN_WINNER_DIFF: f32 = 0.075;
 
-fn click(rng: &mut impl Rng, field: &mut Field, points: &[(isize, isize)]) -> bool {
-    let Some(&point) = points.choose(rng) else { return false };
+fn click(rng: &mut impl Rng, field: &mut Field) -> bool {
+    let Some(&point) = field.safe_frontier().choose(rng) else { return false };
     let _ = field.reveal_cell(point);
     true
 }
@@ -24,16 +24,16 @@ fn gen_puzzle() -> Field {
         let _ = field.reveal_cell((0, 0));
 
         for _ in 0..MIN_CLICKS {
-            let frontier = field.safe_frontier();
-            if !click(&mut rng, &mut field, &frontier) {
+            if !click(&mut rng, &mut field) {
                 continue 'retry;
             }
         }
 
+        field.judge = Judge::Strict;
+
         for _ in MIN_CLICKS..MAX_CLICKS {
             if field.risks().global_best() > 0.0 { break }
-            let frontier: Vec<_> = field.risks().iter().filter_map(|(c, r)| (r == 0.0).then_some(c)).collect();
-            click(&mut rng, &mut field, &frontier);
+            click(&mut rng, &mut field);
         }
 
         let best = field.risks().values().min_by(|x, y| x.partial_cmp(y).unwrap()).unwrap();
