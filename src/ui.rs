@@ -27,6 +27,7 @@ struct Camera {
     col: u16,
     row: u16,
     mode: DisplayMode,
+    cheat: bool,
     dead: bool,
     theme: Theme,
     iconset: IconSet,
@@ -34,18 +35,34 @@ struct Camera {
 }
 
 impl Camera {
+    fn default_mode(cheat: bool) -> DisplayMode {
+        if cheat {
+            DisplayMode::Risk
+        } else {
+            DisplayMode::Normal
+        }
+    }
+
     fn new(args: Args, save_file: File, (w, h): (u16, u16)) -> Self {
-        let mode = if args.cheat { DisplayMode::Risk } else { DisplayMode::Normal };
-        let theme = args.theme.theme();
-        let iconset = args.iconset.iconset();
-        Self { field: Field::new(args.density, args.judge, args.solvable), x: -(w as isize) / 2, y: -(h as isize) / 2, col: u16::MAX, row: u16::MAX, dead: false, theme, iconset, save_file, mode, w, h }
+        Self {
+            field: Field::new(args.density, args.judge, args.solvable),
+            w, h,
+            x: -(w as isize) / 2, y: -(h as isize) / 2,
+            col: u16::MAX, row: u16::MAX,
+            mode: Self::default_mode(args.cheat),
+            cheat: args.cheat,
+            dead: false,
+            theme: args.theme.theme(),
+            iconset: args.iconset.iconset(),
+            save_file,
+        }
     }
 
     fn reset(&mut self) {
         self.field.clear();
         self.x = -(self.w as isize) / 2;
         self.y = -(self.h as isize) / 2;
-        self.mode = DisplayMode::Normal;
+        self.mode = Self::default_mode(self.cheat);
         self.dead = false;
         self.draw_entire_board();
     }
