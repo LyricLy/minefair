@@ -3,6 +3,7 @@ use std::fs::File;
 use std::fmt::Display;
 use std::collections::VecDeque;
 use std::panic;
+use std::time::{Duration, Instant};
 use crossterm::{queue, terminal, cursor};
 use crossterm::event::{Event, KeyCode, MouseEventKind, MouseEvent, MouseButton, read, poll, EnableMouseCapture, DisableMouseCapture, KeyModifiers};
 use crossterm::style::Stylize;
@@ -32,6 +33,7 @@ struct Camera {
     theme: Theme,
     iconset: IconSet,
     save_file: File,
+    blink: bool,
 }
 
 impl Camera {
@@ -55,6 +57,7 @@ impl Camera {
             theme: args.theme.theme(),
             iconset: args.iconset.iconset(),
             save_file,
+            blink: false,
         }
     }
 
@@ -86,28 +89,31 @@ impl Camera {
         let (on, c) = match cell {
             Cell::Hidden(flag) => {
                 let on = self.theme.bg_hidden;
-                let c = if flag {
-                    self.iconset.flag.with(self.theme.risk_color(1.0)).on(on).bold()
-                } else {
-                    match self.mode {
-                        DisplayMode::Normal => self.iconset.hidden.on(on).dim(),
-                        DisplayMode::Risk => {
-                            let risk = self.field.cell_risk(p);
-                            if risk == 1.0 {
-                                self.iconset.mine.on(on).with(self.theme.risk_color(1.0))
-                            } else {
-                                let digit = char::from_digit((35.0*risk).ceil() as u32, 36).unwrap();
-                                digit.on(on).with(self.theme.risk_color(risk))
-                            }
-                        },
-                        DisplayMode::Judge => match self.field.definite_risk(p) {
-                            Some(true) => self.iconset.mine.on(on).with(self.theme.risk_color(1.0)),
-                            Some(false) => self.iconset.safe.on(on).with(self.theme.risk_color(0.0)),
-                            None => self.iconset.unknown_risk.on(on).with(self.theme.unknown_risk),
-                        },
-                    }
+                let c = match self.mode {
+                    _ if flag && !(self.blink && match self.mode {
+                        DisplayMode::Risk => self.field.cell_risk(p) != 1.0,
+                        DisplayMode::Judge => self.field.definite_risk(p) != Some(true),
+                        _ => false,
+                    }) => {
+                        self.iconset.flag.with(self.theme.risk_color(1.0)).on(on).bold()
+                    },
+                    DisplayMode::Normal => self.iconset.hidden.on(on).dim(),
+                    DisplayMode::Risk => {
+                        let risk = self.field.cell_risk(p);
+                        if risk == 1.0 {
+                            self.iconset.mine.on(on).with(self.theme.risk_color(1.0))
+                        } else {
+                            let digit = char::from_digit((35.0*risk).ceil() as u32, 36).unwrap();
+                            digit.on(on).with(self.theme.risk_color(risk))
+                        }
+                    },
+                    DisplayMode::Judge => match self.field.definite_risk(p) {
+                        Some(true) => self.iconset.mine.on(on).with(self.theme.risk_color(1.0)),
+                        Some(false) => self.iconset.safe.on(on).with(self.theme.risk_color(0.0)),
+                        None => self.iconset.unknown_risk.on(on).with(self.theme.unknown_risk),
+                    },
                 };
-                (on, c)
+            (on, c)
             },
             Cell::Revealed(n) => {
                 let on = self.theme.bg_revealed;
@@ -181,7 +187,9 @@ impl Camera {
         }
         let pos = self.clicked_cell(col, row);
         self.field.toggle_flag(pos);
+        let blink = std::mem::replace(&mut self.blink, false);
         self.show_cell(pos);
+        self.blink = blink;
     }
 
     fn pan(&mut self, dx: isize, dy: isize) {
@@ -235,15 +243,26 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
     let mut speed = 1;
     let mut hold = None;
     let mut click_active = false;
+    let mut blink_start = Instant::now();
     cam.draw_entire_board();
 
     loop {
         stdout().flush()?;
+
+        if cam.mode != DisplayMode::Normal {
+            // blinking
+            if !poll(Duration::from_secs_f64(1.0 - blink_start.elapsed().as_secs_f64() % 1.0))? {
+                cam.blink = !cam.blink;
+                cam.draw_entire_board();
+                continue;
+            }
+        }
+
         let mut ev;
         // read off buffered drag events instead of doing them all for smoothnesss
         loop {
             ev = read()?;
-            if matches!(ev, Event::Mouse(MouseEvent { kind: MouseEventKind::Drag(_), .. })) && poll(std::time::Duration::from_secs(0))? {
+            if let Event::Mouse(MouseEvent { kind: MouseEventKind::Drag(_), .. }) = ev && poll(Duration::from_secs(0))? {
                 continue;
             }
             break;
@@ -263,6 +282,8 @@ pub fn game_loop(args: Args, save_path: std::path::PathBuf) -> Result<()> {
                         DisplayMode::Risk => DisplayMode::Judge,
                         x => x,
                     };
+                    blink_start = Instant::now();
+                    cam.blink = false;
                     cam.draw_entire_board();
                 },
                 KeyCode::Char('r') => if cam.dead { cam.reset() },
