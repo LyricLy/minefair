@@ -3,6 +3,7 @@ name: minute minefair on Github Pages
 on:
   push:
     branches: ["master"]
+    paths: ['minute/root/**']
 
 jobs:
   build:
