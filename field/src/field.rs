@@ -1,11 +1,13 @@
-use bincode::{Decode, Encode};
+use savefile::prelude::Savefile;
 use std::collections::HashMap;
 use std::time::Duration;
 
 use crate::judges::Judge;
 use crate::cache::RiskCache;
+use crate::saving::legacy;
 
-#[derive(Clone, Copy, Encode, Decode)]
+#[derive(Clone, Copy, Savefile)]
+#[repr(C)]
 struct CellData {
     /* bit-packed representation:
        x   x   x   x   x   x   x   x
@@ -55,6 +57,13 @@ impl CellData {
     }
 }
 
+impl From<legacy::CellData> for CellData {
+    #[inline(always)]
+    fn from(value: legacy::CellData) -> Self {
+        Self { data: value.data }
+    }
+}
+
 pub(crate) type Coord = (isize, isize);
 const CHUNK_SIZE: isize = 64;
 const CHUNK_AREA: usize = (CHUNK_SIZE * CHUNK_SIZE) as usize;
@@ -69,7 +78,7 @@ fn chunk_point((x, y): Coord) -> (Coord, usize) {
     (chunk, point as usize)
 }
 
-#[derive(Encode, Decode, Clone)]
+#[derive(Savefile, Clone)]
 pub struct Field {
     chunks: HashMap<Coord, [CellData; CHUNK_AREA]>,
     pub(crate) risk_cache: RiskCache,
@@ -79,6 +88,21 @@ pub struct Field {
     size: Option<(usize, usize)>,
     cells_revealed: usize,
     time_elapsed: Duration,
+}
+
+impl From<legacy::Field> for Field {
+    fn from(old: legacy::Field) -> Self {
+        Self {
+            cells_revealed: old.chunks.values().map(|c| c.iter().filter(|&&c| CellData::from(c).to_cell().is_revealed()).count()).sum(),
+            chunks: old.chunks.into_iter().map(|(p, c)| (p, c.map(From::from))).collect(),
+            risk_cache: old.risk_cache.into(),
+            density: old.density,
+            judge: old.judge.into(),
+            solvable: old.solvable,
+            size: None,
+            time_elapsed: Duration::ZERO,
+        }
+    }
 }
 
 impl Field {

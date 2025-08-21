@@ -1,9 +1,10 @@
-use bincode::{Decode, Encode};
+use savefile::prelude::Savefile;
 use std::cmp::Ordering;
 use std::collections::{HashMap, BTreeSet};
 use crate::field::Coord;
 
-#[derive(Decode, Encode, Clone, Copy, PartialEq)]
+#[derive(Savefile, Clone, Copy, PartialEq)]
+#[repr(C)]
 struct ByRisk(Coord, f32);
 
 impl Eq for ByRisk {}
@@ -21,7 +22,7 @@ impl Ord for ByRisk {
     }
 }
 
-#[derive(Decode, Encode, Clone, Default)]
+#[derive(Savefile, Clone, Default)]
 pub struct RiskCache {
     contents: HashMap<Coord, f32>,
     by_risk: BTreeSet<ByRisk>,
@@ -81,5 +82,11 @@ impl RiskCache {
 
     pub fn values(&self) -> impl Iterator<Item=f32> {
         self.contents.values().copied()
+    }
+}
+
+impl From<HashMap<Coord, f32>> for RiskCache {
+    fn from(contents: HashMap<Coord, f32>) -> Self {
+        Self { by_risk: contents.iter().map(|(&point, &risk)| ByRisk(point, risk)).collect(), contents }
     }
 }

@@ -224,13 +224,13 @@ impl Camera {
         }
         self.save_file.rewind().expect("failed to rewind");
         self.save_file.set_len(0).expect("failed to truncate");
-        bincode::encode_into_std_write(&self.field, &mut self.save_file, bincode::config::standard()).expect("failed to write to save file");
+        self.field.save(&mut self.save_file).expect("failed to write to save file");
         self.save_file.flush().expect("failed to flush");
     }
 
     fn load(&mut self) {
         self.save_file.rewind().expect("failed to rewind");
-        let mut r: Field = bincode::decode_from_std_read(&mut self.save_file, bincode::config::standard()).expect("failed to read save file");
+        let mut r = Field::load(&mut self.save_file).expect("failed to read save file");
         std::mem::swap(&mut self.field, &mut r);
         self.init_time();
     }

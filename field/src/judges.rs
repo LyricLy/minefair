@@ -1,8 +1,10 @@
-use bincode::{Decode, Encode};
+use savefile::prelude::Savefile;
 use rand::random;
-use crate::field::*;
 
-#[derive(Clone, Decode, Encode)]
+use crate::field::*;
+use crate::saving::legacy;
+
+#[derive(Clone, Savefile)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum Judge {
     Random,
@@ -82,4 +84,18 @@ impl Field {
     pub fn safe_frontier(&self) -> Vec<Coord> {
         self.risk_cache.keys().filter(|&p| self.definite_risk(p) == Some(false)).collect()
     }
+}
+
+impl From<legacy::Judge> for Judge {
+    fn from(value: legacy::Judge) -> Self {
+        match value {
+            legacy::Judge::Random => Random,
+            legacy::Judge::Strict => Strict,
+            legacy::Judge::Kind => Kind,
+            legacy::Judge::Local => Local,
+            legacy::Judge::Global => Global,
+            legacy::Judge::KaboomGlobal => KaboomGlobal,
+            legacy::Judge::KaboomLocal => KaboomLocal,
+        }
+    } 
 }
