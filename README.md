@@ -29,7 +29,7 @@ There is also an optional flag that will ensure that the generated board is alwa
 
 # Installation
 ```
-; cargo install --git https://github.com/LyricLy/minefair
+; cargo install --git https://github.com/LyricLy/minefair minefair
 ```
 
 # Command line usage
