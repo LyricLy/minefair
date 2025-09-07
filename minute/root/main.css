@@ -5,9 +5,7 @@
 
 body {
     width: 100%;
-    --max-width: 500px;
-    --base-size: min(calc(var(--max-width) / 100), 1vw);
-    max-width: var(--max-width);
+    max-width: 500px;
     margin: auto;
     background: #292c3c;
     display: flex;
@@ -50,29 +48,27 @@ a {
 }
 
 table {
-    border-radius: calc(2*var(--base-size));
-    border-spacing: calc(0.75*var(--base-size));
+    border-spacing: 5px;
     padding: 2px;
     table-layout: fixed;
-    width: 100%;
     margin: 0;
 }
 
 td {
     padding: 0;
-    container-type: size;
 
     div {
         display: flex;
         justify-content: center;
         line-height: 0;
         aspect-ratio: 1.375 / 1;
+        width: 100px;
         align-items: center;
         text-align: center;
         font-weight: bold;
-        border-radius: 6px;
+        border-radius: 14px;
         background: #949cbb;
-        font-size: calc(7.5*var(--base-size));
+        font-size: 52px;
         user-select: none;
         -webkit-user-select: none;
 
@@ -80,7 +76,7 @@ td {
             transition: all 0.1s ease;
             transition-property: background-color, transform, box-shadow;
             --risk-color: color-mix(in oklch, #a6d189, #e78284 var(--riskiness));
-            font-size: calc(4.5*var(--base-size));
+            font-size: 30px;
 
             &:not(.best) {
                 background: #737994;
@@ -100,7 +96,7 @@ td {
         }
 
         img {
-            height: calc(6.5*var(--base-size));
+            height: 40px;
         }
 
         &:not([data-val]):not(.risk-shown) {

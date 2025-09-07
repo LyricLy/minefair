@@ -154,9 +154,10 @@ function reset(grid, view, day) {
 }
 
 async function main() {
+    const grid = document.getElementById("grid");
+
     const resp = await fetch("puzzles");
     const view = new DataView(await resp.arrayBuffer());
-    const grid = document.getElementById("grid");
 
     const current = parseInt(localStorage.getItem("puzzle"), 10);
     const today = Math.floor((new Date() - EPOCH) / (24*60*60*1000));
@@ -176,6 +177,11 @@ async function main() {
     )) {
         reset(grid, view, today);
     }
+
+    const scaleBy = document.body.offsetWidth / grid.offsetWidth;
+    const scaledOff = grid.offsetHeight * (1-scaleBy) / 2;
+    grid.style.setProperty("transform", `scale(${scaleBy})`);
+    grid.style.setProperty("margin", `${-scaledOff}px 0`);
 }
 
 main();
