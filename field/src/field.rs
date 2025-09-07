@@ -25,12 +25,14 @@ pub enum Cell {
     Revealed(u8),
 }
 
-impl Cell {
-    pub(crate) fn new() -> Self {
+impl Default for Cell {
+    fn default() -> Self {
         Self::Hidden(false)
     }
+}
 
-    pub(crate) fn is_revealed(self) -> bool {
+impl Cell {
+    pub fn is_revealed(self) -> bool {
         match self {
             Self::Revealed(_) => true,
             Self::Hidden(_) => false,
@@ -128,7 +130,7 @@ impl Field {
         let (chunk_coord, idx) = chunk_point(point);
         Some(match self.chunks.get(&chunk_coord) {
             Some(chunk) => chunk[idx].to_cell(),
-            None => Cell::new(),
+            None => Cell::default(),
         })
     }
 
@@ -140,7 +142,7 @@ impl Field {
 
     pub(crate) fn set(&mut self, point: Coord, cell: Cell) {
         let (chunk_coord, idx) = chunk_point(point);
-        let chunk = self.chunks.entry(chunk_coord).or_insert_with(|| [Cell::new().to_data(); CHUNK_AREA]);
+        let chunk = self.chunks.entry(chunk_coord).or_insert_with(|| [Cell::default().to_data(); CHUNK_AREA]);
         self.cells_revealed -= chunk[idx].to_cell().is_revealed() as usize;
         self.cells_revealed += cell.is_revealed() as usize;
         chunk[idx] = cell.to_data();
@@ -207,7 +209,7 @@ mod tests {
     fn uninitialized() {
         let field = Field::default();
         let point = (0, 2);
-        assert_eq!(field.get(point), Some(Cell::new()));
+        assert_eq!(field.get(point), Some(Cell::default()));
     }
 
     #[test]

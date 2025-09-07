@@ -1,13 +1,15 @@
 use rand::prelude::*;
-use minefair_field::{Field, Judge, Cell};
-use std::io::{Write, Result};
+use minefair_field::{Field, Judge, Cell, adjacents};
+use std::fs::{File, OpenOptions};
+use std::io::{Write, Read, Seek, Result, SeekFrom, BufReader, BufWriter};
+use std::time::{Duration, SystemTime};
+use std::collections::HashMap;
 
 const MIN_CLICKS: usize = 5;
 const MAX_CLICKS: usize = 16;
-const MIN_FRONTIER: usize = 9;
-const MAX_FRONTIER: usize = 18;
-const DENSITY_RANGE: std::ops::RangeInclusive<f32> = 0.4..=0.6;
-const MIN_WINNER_DIFF: f32 = 0.075;
+const MIN_FRONTIER: usize = 4;
+const MAX_FRONTIER: usize = 9;
+const MIN_WINNER_DIFF: f32 = 0.05;
 
 fn click(rng: &mut impl Rng, field: &mut Field) -> bool {
     let Some(&point) = field.safe_frontier().choose(rng) else { return false };
@@ -19,7 +21,7 @@ fn gen_puzzle() -> Field {
     let mut rng = rand::rng();
 
     'retry: loop {
-        let mut field = Field::new(rng.random_range(DENSITY_RANGE), Judge::Kind, false, None);
+        let mut field = Field::new(if rng.random() { 0.45 } else { 0.55 }, Judge::Kind, false, None);
 
         let _ = field.reveal_cell((0, 0));
 
@@ -37,13 +39,21 @@ fn gen_puzzle() -> Field {
         }
 
         let best = field.risks().values().min_by(|x, y| x.partial_cmp(y).unwrap()).unwrap();
-        let non_flags = field.risks().values().filter(|&r| r != 1.0).count();
-
         if best == 0.0
         || !field.is_one_group()
-        || non_flags < MIN_FRONTIER
-        || non_flags > MAX_FRONTIER
         || field.risks().values().filter(|&r| r - best < MIN_WINNER_DIFF).count() > 1 {
+            continue;
+        }
+
+        let mut by_clue = HashMap::<Vec<(isize, isize)>, bool>::new();
+        for (pos, risk) in field.risks().iter() {
+            if risk == 1.0 { continue }
+            let mut clue: Vec<_> = adjacents(pos).filter(|&adj| field.get(adj).is_some_and(|x| x.is_revealed())).collect();
+            clue.sort();
+            by_clue.entry(clue).and_modify(|v| *v = false).or_insert(true);
+        }
+
+        if !(MIN_FRONTIER..=MAX_FRONTIER).contains(&by_clue.into_values().filter(|&v| v).count()) {
             continue;
         }
 
@@ -84,10 +94,35 @@ fn write_field(field: &Field, writer: &mut impl Write) -> Result<()> {
     Ok(())
 }
 
+fn today() -> u64 {
+    let epoch = SystemTime::UNIX_EPOCH + Duration::from_secs(1755252000);
+    SystemTime::now().duration_since(epoch).unwrap().as_secs() / (24 * 60 * 60)
+}
+
 fn main() -> Result<()> {
-    let mut file = std::fs::File::create("puzzles")?;
-    for _ in 0..730 {
-        write_field(&gen_puzzle(), &mut file)?;
+    if std::env::args().nth(1).as_deref() == Some("one") {
+        let _ = gen_puzzle().save(&mut File::create("puzzle")?);
+        return Ok(());
     }
+
+    let start = today() + 1;
+    let file = OpenOptions::new().read(true).write(true).create(true).open("puzzles")?;
+
+    let mut reader = BufReader::new(file);
+    for _ in 0..start {
+        let mut buf = [0; 4];
+        reader.read_exact(&mut buf)?;
+        let width = f32::from_le_bytes(buf);
+        reader.read_exact(&mut buf)?;
+        let height = f32::from_le_bytes(buf);
+        reader.seek_relative(4 * ((width as i64 * height as i64) + 1))?;
+    }
+    reader.seek(SeekFrom::Current(0))?;
+
+    let mut writer = BufWriter::new(reader.into_inner());
+    for _ in start..730 {
+        write_field(&gen_puzzle(), &mut writer)?;
+    }
+
     Ok(())
 }
