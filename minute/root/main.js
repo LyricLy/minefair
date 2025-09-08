@@ -19,7 +19,7 @@ function drawPuzzle(grid, puzzle) {
     status.textContent = "3 tries";
 
     const density = status.previousElementSibling;
-    density.textContent = `${(puzzle.density*100).toFixed(2)}%`;
+    density.textContent = `${(puzzle.density*100).toFixed(0)}%`;
     density.classList.remove("low-density");
     density.classList.remove("high-density");
     density.classList.add(puzzle.density < 0.5 ? "low-density" : "high-density");
