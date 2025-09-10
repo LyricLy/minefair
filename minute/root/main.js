@@ -11,7 +11,10 @@ function reportOf(grid) {
 }
 
 function drawPuzzle(grid, puzzle) {
-    subtractFlagBox.onchange = () => drawPuzzle(grid, puzzle);
+    subtractFlagBox.onchange = () => {
+        drawPuzzle(grid, puzzle);
+        replay(grid, puzzle);
+    };
 
     const report = reportOf(grid);
     report.onclick = copyReport(puzzle);
@@ -161,6 +164,12 @@ function reset(grid, view, day) {
     drawPuzzle(grid, getPuzzle(view, day));
 }
 
+function replay(grid, puzzle) {
+    for (const [x, y] of JSON.parse(localStorage.getItem("clicks"))) {
+        click(puzzle).call(grid.rows[y].cells[x].firstElementChild, null, true);
+    }
+}
+
 async function main() {
     subtractFlagBox.checked = +localStorage.getItem("subtract-flags");
     subtractFlagBox.addEventListener("change", function () { localStorage.setItem("subtract-flags", +this.checked) });
@@ -174,13 +183,9 @@ async function main() {
     const today = Math.floor((new Date() - EPOCH) / (24*60*60*1000))-1;
     if (isNaN(current)) return reset(grid, view, today);
 
-    // replay
     const puzzle = getPuzzle(view, current);
     drawPuzzle(grid, puzzle);
-    const clicks = JSON.parse(localStorage.getItem("clicks"));
-    for (const [x, y] of JSON.parse(localStorage.getItem("clicks"))) {
-        click(puzzle).call(grid.rows[y].cells[x].firstElementChild, null, true);
-    }
+    replay(grid, puzzle);
 
     if (current !== today && (
         grid.querySelector(clickable) === null
