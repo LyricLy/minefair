@@ -44,6 +44,11 @@ a {
         cursor: pointer;
         user-select: none;
         -webkit-user-select: none;
+        &:hover {
+            transform: scale(1.05);
+            transform-origin: bottom;
+            box-shadow: black 0 0 3px -1px;
+        }
     }
 }
 

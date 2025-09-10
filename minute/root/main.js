@@ -72,8 +72,8 @@ function reveal(puzzle, div) {
     div.textContent = `${(risk*100).toFixed(2)}`;
     div.classList.add("risk-shown");
     div.style.setProperty("--riskiness", `${risk*100}%`);
-    if (risk === puzzle.best) div.classList.add("best");
-    return risk - puzzle.best;
+    if (risk === puzzle.sortedRisks[0]) div.classList.add("best");
+    return risk;
 }
 
 function revealAll(puzzle, table) {
@@ -103,10 +103,18 @@ function click(puzzle) {
         const status = statusOf(table);
         const report = reportOf(table);
 
-        const perf = reveal(puzzle, this);
-        report.textContent += perf === 0.0 ? "🟩" : perf < 0.2 ? "🟨" : perf < 0.4 ? "🟧" : "🟥";
+        const risk = reveal(puzzle, this);
+        if (puzzle.num >= 28) {
+            const perfRange = (risk - puzzle.sortedRisks[1]) / (puzzle.sortedRisks[puzzle.sortedRisks.length-1] - puzzle.sortedRisks[1]);
+            const perfIndex = (puzzle.sortedRisks.lastIndexOf(risk)-1) / (puzzle.sortedRisks.length-2);
+            const perf = (perfRange + perfIndex) / 2;
+            report.textContent += perf < 0 ? "🟩" : perf < 1/3 ? "🟨" : perf < 2/3 ? "🟧" : "🟥";
+        } else {
+            const perf = risk - puzzle.sortedRisks[0];
+            report.textContent += perf === 0.0 ? "🟩" : perf < 0.2 ? "🟨" : perf < 0.4 ? "🟧" : "🟥";
+        }
 
-        if (perf === 0.0) {
+        if (risk === puzzle.sortedRisks[0]) {
             status.textContent = "well done";
             revealAll(puzzle, table);
             return;
@@ -153,7 +161,9 @@ function getPuzzle(view, idx) {
         }
     }
 
-    r.best = Math.min(...r.risks.values());
+    const groups = Map.groupBy(r.risks.values(), x => x);
+    groups.delete(1);
+    r.sortedRisks = [...groups.keys()].sort((a, b) => a - b);
 
     return r;
 }
