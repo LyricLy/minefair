@@ -117,6 +117,10 @@ td {
             background: #414559;
         }
 
+        &[data-val="0"] {
+            color: transparent;
+        }
+
         &[data-val="1"] {
             color: #baaaee;
         }

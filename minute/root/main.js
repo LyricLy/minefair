@@ -1,5 +1,6 @@
 const EPOCH = new Date(Date.UTC(2025, 7, 15, 10));
 const clickable = "div:not([data-val]):not(.risk-shown)";
+const subtractFlagBox = document.getElementById("subtract-flags");
 
 function statusOf(grid) {
     return grid.parentElement.getElementsByClassName("status")[0];
@@ -10,6 +11,8 @@ function reportOf(grid) {
 }
 
 function drawPuzzle(grid, puzzle) {
+    subtractFlagBox.onchange = () => drawPuzzle(grid, puzzle);
+
     const report = reportOf(grid);
     report.onclick = copyReport(puzzle);
     report.classList.remove("revealed");
@@ -28,7 +31,7 @@ function drawPuzzle(grid, puzzle) {
     for (let y = 0; y < puzzle.height; y++) {
         const row = document.createElement("tr");
         for (let x = 0; x < puzzle.width; x++) {
-            const value = puzzle.grid[y*puzzle.width+x];
+            let value = puzzle.grid[y*puzzle.width+x];
             const cell = document.createElement("td");
             if (value !== undefined) {
                 const div = document.createElement("div");
@@ -37,6 +40,11 @@ function drawPuzzle(grid, puzzle) {
                     div.innerHTML = '<img src="flag.svg" draggable="false">';
                 }
                 if (value) {
+                    if (subtractFlagBox.checked) {
+                        for (const [ax, ay] of [[x, y-1], [x+1, y-1], [x+1, y], [x+1, y+1], [x, y+1], [x-1, y+1], [x-1, y], [x-1, y-1]]) {
+                            value -= puzzle.risks.get(`${ax},${ay}`) === 1;
+                        }
+                    }
                     div.textContent = value;
                     div.setAttribute("data-val", value.toString());
                 } else {
@@ -154,13 +162,16 @@ function reset(grid, view, day) {
 }
 
 async function main() {
+    subtractFlagBox.checked = +localStorage.getItem("subtract-flags");
+    subtractFlagBox.addEventListener("change", function () { localStorage.setItem("subtract-flags", +this.checked) });
+
     const grid = document.getElementById("grid");
 
     const resp = await fetch("puzzles");
     const view = new DataView(await resp.arrayBuffer());
 
     const current = parseInt(localStorage.getItem("puzzle"), 10);
-    const today = Math.floor((new Date() - EPOCH) / (24*60*60*1000));
+    const today = Math.floor((new Date() - EPOCH) / (24*60*60*1000))-1;
     if (isNaN(current)) return reset(grid, view, today);
 
     // replay
