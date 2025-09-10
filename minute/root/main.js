@@ -180,7 +180,7 @@ async function main() {
     const view = new DataView(await resp.arrayBuffer());
 
     const current = parseInt(localStorage.getItem("puzzle"), 10);
-    const today = Math.floor((new Date() - EPOCH) / (24*60*60*1000))-1;
+    const today = Math.floor((new Date() - EPOCH) / (24*60*60*1000));
     if (isNaN(current)) return reset(grid, view, today);
 
     const puzzle = getPuzzle(view, current);
