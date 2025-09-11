@@ -157,9 +157,7 @@ impl Camera {
         let mut done = 0;
         while !queue.is_empty() && done < 2401 {
             let pos = queue.pop_front().unwrap();
-            if let None | Some(Cell::Hidden(true)) | Some(Cell::Revealed(_)) = self.field.get(pos) {
-                continue;
-            }
+            let Some(Cell::Hidden(false)) = self.field.get(pos) else { continue };
             match self.field.reveal_cell_first_zero(pos) {
                 Some(n) => {
                     if n == 0 {
