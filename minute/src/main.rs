@@ -1,7 +1,7 @@
 use rand::prelude::*;
 use minefair_field::{Field, Judge, Cell, adjacents};
 use std::fs::{File, OpenOptions};
-use std::io::{Write, Read, Seek, Result, SeekFrom, BufReader, BufWriter};
+use std::io::{Write, Read, Seek, Result, SeekFrom, BufReader, BufWriter, ErrorKind};
 use std::time::{Duration, SystemTime};
 use std::collections::HashMap;
 
@@ -17,7 +17,7 @@ fn click(rng: &mut impl Rng, field: &mut Field) -> bool {
     true
 }
 
-fn gen_puzzle() -> Field {
+fn gen_puzzle(insane: bool) -> Field {
     let mut rng = rand::rng();
 
     'retry: loop {
@@ -36,6 +36,10 @@ fn gen_puzzle() -> Field {
         for _ in MIN_CLICKS..MAX_CLICKS {
             if field.risks().global_best() > 0.0 { break }
             click(&mut rng, &mut field);
+        }
+
+        if insane {
+            break field;
         }
 
         let best = field.risks().values().min_by(|x, y| x.partial_cmp(y).unwrap()).unwrap();
@@ -94,24 +98,45 @@ fn write_field(field: &Field, writer: &mut impl Write) -> Result<()> {
     Ok(())
 }
 
-fn today() -> u64 {
-    let epoch = SystemTime::UNIX_EPOCH + Duration::from_secs(1755252000);
+fn today(insane: bool) -> u64 {
+    let epoch = SystemTime::UNIX_EPOCH + Duration::from_secs(if insane { 1757671200 } else { 1755252000 });
     SystemTime::now().duration_since(epoch).unwrap().as_secs() / (24 * 60 * 60)
 }
 
 fn main() -> Result<()> {
-    if std::env::args().nth(1).as_deref() == Some("one") {
-        let _ = gen_puzzle().save(&mut File::create("puzzle")?);
+    let mut one = false;
+    let mut insane = false;
+    let mut target = None;
+    for arg in std::env::args().skip(1) {
+        if arg == "--one" {
+            one = true;
+        } else if arg == "--insane" {
+            insane = true;
+        } else {
+            target = Some(arg);
+        }
+    }
+
+    if one {
+        let _ = gen_puzzle(insane).save(&mut File::create(target.as_deref().unwrap_or("puzzle"))?);
         return Ok(());
     }
 
-    let start = today() + 1;
-    let file = OpenOptions::new().read(true).write(true).create(true).open("puzzles")?;
+    let mut start = today(insane) + 1;
+    let file = OpenOptions::new().read(true).write(true).create(true).open(target.as_deref().unwrap_or("puzzles"))?;
 
     let mut reader = BufReader::new(file);
-    for _ in 0..start {
+    for i in 0..start {
         let mut buf = [0; 4];
-        reader.read_exact(&mut buf)?;
+        match reader.read_exact(&mut buf) {
+            Ok(_) => {},
+            Err(e) => if let ErrorKind::UnexpectedEof = e.kind() {
+                start = i;
+                break;
+            } else {
+                return Err(e);
+            },
+        }
         let width = f32::from_le_bytes(buf);
         reader.read_exact(&mut buf)?;
         let height = f32::from_le_bytes(buf);
@@ -121,7 +146,7 @@ fn main() -> Result<()> {
 
     let mut writer = BufWriter::new(reader.into_inner());
     for _ in start..730 {
-        write_field(&gen_puzzle(), &mut writer)?;
+        write_field(&gen_puzzle(insane), &mut writer)?;
     }
 
     Ok(())
