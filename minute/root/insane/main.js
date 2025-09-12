@@ -1,5 +1,5 @@
 const EPOCH = new Date(Date.UTC(2025, 8, 12, 10));
-const OFFSET = 1;
+const OFFSET = 2;
 const clickable = "div:not([data-val]):not(.risk-shown)";
 const subtractFlagBox = document.getElementById("subtract-flags");
 

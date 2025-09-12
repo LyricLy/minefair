@@ -43,7 +43,7 @@ fn gen_puzzle(insane: bool) -> Field {
 
         if insane {
             let risk_set: HashSet<u32> = field.risks().values().map(|x| x.to_bits()).collect();
-            if risk_set.contains(&0.0f32.to_bits()) || !(MIN_INSANE_FRONTIER..=MAX_INSANE_FRONTIER).contains(&risk_set.len()) {
+            if !field.is_one_group() || risk_set.contains(&0.0f32.to_bits()) || !(MIN_INSANE_FRONTIER..=MAX_INSANE_FRONTIER).contains(&risk_set.len()) {
                 continue;
             }
 
@@ -108,7 +108,7 @@ fn write_field(field: &Field, writer: &mut impl Write) -> Result<()> {
 
 fn today(insane: bool) -> u64 {
     let epoch = SystemTime::UNIX_EPOCH + Duration::from_secs(if insane { 1757671200 } else { 1755252000 });
-    SystemTime::now().duration_since(epoch).unwrap().as_secs() / (24 * 60 * 60)
+    SystemTime::now().duration_since(epoch).unwrap().as_secs() / (24 * 60 * 60) + 2*insane as u64
 }
 
 fn main() -> Result<()> {
