@@ -1,4 +1,5 @@
 const EPOCH = new Date(Date.UTC(2025, 8, 12, 10));
+const OFFSET = 1;
 const clickable = "div:not([data-val]):not(.risk-shown)";
 const subtractFlagBox = document.getElementById("subtract-flags");
 
@@ -146,7 +147,7 @@ function getPuzzle(view, idx) {
         density: readOff(),
         grid: [],
         risks: new Map(),
-        num: idx+1,
+        num: idx+1-OFFSET,
     };
 
     for (let y = 0; y < r.height; y++) {
@@ -190,7 +191,7 @@ async function main() {
     const view = new DataView(await resp.arrayBuffer());
 
     const current = parseInt(localStorage.getItem("insane-puzzle"), 10);
-    const today = Math.floor((new Date() - EPOCH) / (24*60*60*1000));
+    const today = Math.floor((new Date() - EPOCH) / (24*60*60*1000))+OFFSET;
     if (isNaN(current)) return reset(grid, view, today);
 
     const puzzle = getPuzzle(view, current);

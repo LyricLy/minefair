@@ -3,13 +3,16 @@ use minefair_field::{Field, Judge, Cell, adjacents};
 use std::fs::{File, OpenOptions};
 use std::io::{Write, Read, Seek, Result, SeekFrom, BufReader, BufWriter, ErrorKind};
 use std::time::{Duration, SystemTime};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const MIN_CLICKS: usize = 5;
 const MAX_CLICKS: usize = 16;
 const MIN_FRONTIER: usize = 4;
 const MAX_FRONTIER: usize = 9;
 const MIN_WINNER_DIFF: f32 = 0.05;
+
+const MIN_INSANE_FRONTIER: usize = 6;
+const MAX_INSANE_FRONTIER: usize = 20;
 
 fn click(rng: &mut impl Rng, field: &mut Field) -> bool {
     let Some(&point) = field.safe_frontier().choose(rng) else { return false };
@@ -39,6 +42,11 @@ fn gen_puzzle(insane: bool) -> Field {
         }
 
         if insane {
+            let risk_set: HashSet<u32> = field.risks().values().map(|x| x.to_bits()).collect();
+            if risk_set.contains(&0.0f32.to_bits()) || !(MIN_INSANE_FRONTIER..=MAX_INSANE_FRONTIER).contains(&risk_set.len()) {
+                continue;
+            }
+
             break field;
         }
 
