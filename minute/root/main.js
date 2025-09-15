@@ -104,15 +104,10 @@ function click(puzzle) {
         const report = reportOf(table);
 
         const risk = reveal(puzzle, this);
-        if (puzzle.num >= 28) {
-            const perfRange = (risk - puzzle.sortedRisks[1]) / (puzzle.sortedRisks[puzzle.sortedRisks.length-1] - puzzle.sortedRisks[1]);
-            const perfIndex = (puzzle.sortedRisks.indexOf(risk)-1) / (puzzle.sortedRisks.length-2);
-            const perf = (perfRange + perfIndex) / 2;
-            report.textContent += perf < 0 ? "🟩" : perf < 1/3 ? "🟨" : perf < 2/3 ? "🟧" : "🟥";
-        } else {
-            const perf = risk - puzzle.sortedRisks[0];
-            report.textContent += perf === 0.0 ? "🟩" : perf < 0.2 ? "🟨" : perf < 0.4 ? "🟧" : "🟥";
-        }
+        const perfRange = (risk - puzzle.sortedRisks[1]) / (puzzle.sortedRisks[puzzle.sortedRisks.length-1] - puzzle.sortedRisks[1]);
+        const perfIndex = (puzzle.sortedRisks.indexOf(risk)-1) / (puzzle.sortedRisks.length-2);
+        const perf = (perfRange + perfIndex) / 2;
+        report.textContent += perf < 0 ? "🟩" : perf < 1/3 ? "🟨" : perf < 2/3 ? "🟧" : "🟥";
 
         if (risk === puzzle.sortedRisks[0]) {
             status.textContent = "well done";
