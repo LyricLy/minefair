@@ -11,7 +11,7 @@ const MIN_FRONTIER: usize = 4;
 const MAX_FRONTIER: usize = 9;
 const MIN_WINNER_DIFF: f32 = 0.05;
 
-const MIN_INSANE_FRONTIER: usize = 6;
+const MIN_INSANE_FRONTIER: usize = 9;
 const MAX_INSANE_FRONTIER: usize = 20;
 
 fn click(rng: &mut impl Rng, field: &mut Field) -> bool {
