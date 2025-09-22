@@ -150,9 +150,11 @@ fn main() -> Result<()> {
         let height = f32::from_le_bytes(buf);
         reader.seek_relative(4 * ((width as i64 * height as i64) + 1))?;
     }
-    reader.seek(SeekFrom::Current(0))?;
+    let pos = reader.seek(SeekFrom::Current(0))?;
 
-    let mut writer = BufWriter::new(reader.into_inner());
+    let file = reader.into_inner();
+    file.set_len(pos)?;
+    let mut writer = BufWriter::new(file);
     for _ in start..730 {
         write_field(&gen_puzzle(insane), &mut writer)?;
     }
