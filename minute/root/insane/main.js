@@ -43,7 +43,7 @@ function drawPuzzle(grid, puzzle) {
                     div.classList.add("risk-shown");
                     div.innerHTML = '<img src="../flag.svg" draggable="false">';
                 }
-                if (value) {
+                if (value != null) {
                     if (subtractFlagBox.checked) {
                         for (const [ax, ay] of [[x, y-1], [x+1, y-1], [x+1, y], [x+1, y+1], [x, y+1], [x-1, y+1], [x-1, y], [x-1, y-1]]) {
                             value -= puzzle.risks.get(`${ax},${ay}`) === 1;
