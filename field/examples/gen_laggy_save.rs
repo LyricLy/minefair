@@ -16,7 +16,7 @@ pub fn main() {
             if dbg!(start.elapsed()) > Duration::from_secs(10) {
                 dbg!(to_reveal);
                 let mut file = File::create("thesave.minefair").unwrap();
-                bincode::encode_into_std_write(&before, &mut file, bincode::config::standard()).unwrap();
+                before.save(&mut file).unwrap();
                 break 'top;
             }
         }

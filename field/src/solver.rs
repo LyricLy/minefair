@@ -64,7 +64,7 @@ impl Field {
                 continue;
             }
             for adj in adjacents(p) {
-                if self.get(adj).is_some_and(|x| x.is_revealed()) {
+                if self.get(adj).is_some_and(|x| x.is_revealed() && x != Cell::Revealed(0)) {
                     for their_adj in adjacents(adj) {
                         if their_adj != p {
                             stack.push(their_adj);
@@ -334,7 +334,7 @@ mod tests {
         let mut rng = rand::rng();
         let mut field = Field::default();
         let _ = field.reveal_cell((0, 0));
-        for _ in 0..100 {
+        for _ in 0..1000 {
             let point = *field.safe_frontier().choose(&mut rng).unwrap();
             let _ = field.reveal_cell(point);
         }
