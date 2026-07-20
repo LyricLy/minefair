@@ -1,9 +1,6 @@
 use clap::ValueEnum;
 use crossterm::style::Color;
-
-fn lerp(t: f32, x: f32, y: f32) -> u8 {
-    (255.0 * ((1.0-t)*x + t*y)) as u8
-}
+use palette::{Srgb, Oklch, FromColor, Mix};
 
 pub struct Theme {
     pub bg_hidden: Color,
@@ -12,16 +9,19 @@ pub struct Theme {
     pub won_void: Color,
     pub nums: [Color; 8],
     pub unknown_risk: Color,
-    safe: (f32, f32, f32),
-    dangerous: (f32, f32, f32), 
+    safe: Srgb,
+    dangerous: Srgb, 
 }
 
 impl Theme {
     pub fn risk_color(&self, risk: f32) -> Color {
+        let a = Oklch::from_color(self.safe);
+        let b = Oklch::from_color(self.dangerous);
+        let c = Srgb::from_color(a.mix(b, risk));
         Color::Rgb {
-            r: lerp(risk, self.safe.0, self.dangerous.0),
-            g: lerp(risk, self.safe.1, self.dangerous.1),
-            b: lerp(risk, self.safe.2, self.dangerous.2),
+            r: (255.0 * c.red) as u8,
+            g: (255.0 * c.green) as u8,
+            b: (255.0 * c.blue) as u8,
         }
     }
 }
@@ -56,8 +56,8 @@ impl ThemeChoice {
                     Color::Rgb { r: 238, g: 190, b: 190 },
                 ],
                 unknown_risk: Color::Rgb { r: 229, g: 200, b: 144 },
-                safe: (0.650, 0.819, 0.537),
-                dangerous: (0.905, 0.509, 0.517),
+                safe: Srgb::new(0.650, 0.819, 0.537),
+                dangerous: Srgb::new(0.905, 0.509, 0.517),
             },
             Self::Legacy => Theme {
                 bg_hidden: Color::Rgb { r: 40, g: 40, b: 40 },
@@ -75,8 +75,8 @@ impl ThemeChoice {
                     Color::Rgb { r: 255, g: 170, b: 230 },
                 ],
                 unknown_risk: Color::Rgb { r: 250, g: 240, b: 50 },
-                safe: (0.0, 1.0, 0.0),
-                dangerous: (1.0, 0.0, 0.0),
+                safe: Srgb::new(0.0, 1.0, 0.0),
+                dangerous: Srgb::new(1.0, 0.0, 0.0),
             },
             Self::Colorblind => Theme {
                 bg_hidden: Color::Rgb { r: 48, g: 52, b: 70 },
@@ -94,8 +94,8 @@ impl ThemeChoice {
                     Color::Rgb { r: 238, g: 190, b: 190 },
                 ],
                 unknown_risk: Color::Rgb { r: 229, g: 200, b: 144 },
-                safe: (0.549, 0.666, 0.933),
-                dangerous: (0.905, 0.509, 0.517),
+                safe: Srgb::new(0.549, 0.666, 0.933),
+                dangerous: Srgb::new(0.905, 0.509, 0.517),
             },
             Self::HighContrast => Theme {
                 bg_hidden: Color::Rgb { r: 0, g: 0, b: 0 },
@@ -113,8 +113,8 @@ impl ThemeChoice {
                     Color::Rgb { r: 216, g: 216, b: 216 },
                 ],
                 unknown_risk: Color::Rgb { r: 250, g: 240, b: 50 },
-                safe: (0.0, 1.0, 0.0),
-                dangerous: (1.0, 0.0, 0.0),
+                safe: Srgb::new(0.0, 1.0, 0.0),
+                dangerous: Srgb::new(1.0, 0.0, 0.0),
             },
             Self::Microsoft => Theme {
                 // slightly different from the real background colour to replicate the effect of the highlights/borders
@@ -133,8 +133,8 @@ impl ThemeChoice {
                     Color::Rgb { r: 128, g: 128, b: 128 },
                 ],
                 unknown_risk: Color::Rgb { r: 255, g: 255, b: 0 },
-                safe: (0.0, 0.8, 0.0),
-                dangerous: (1.0, 0.0, 0.0),
+                safe: Srgb::new(0.0, 0.8, 0.0),
+                dangerous: Srgb::new(1.0, 0.0, 0.0),
             },
             Self::BlackAndWhite => Theme {
                 bg_hidden: Color::Grey,
@@ -152,8 +152,8 @@ impl ThemeChoice {
                     Color::Black,
                 ],
                 unknown_risk: Color::Black,
-                safe: (0.0, 0.0, 0.0),
-                dangerous: (0.0, 0.0, 0.0),
+                safe: Srgb::new(0.0, 0.0, 0.0),
+                dangerous: Srgb::new(0.0, 0.0, 0.0),
             },
         }
     }
